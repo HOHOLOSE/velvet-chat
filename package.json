@@ -1,12 +1,29 @@
 {
   "name": "velvet-chat",
   "version": "1.0.0",
+  "description": "AM Album Themed Random Chat Application",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
+  "keywords": [
+    "chat",
+    "random-chat",
+    "socket.io",
+    "express",
+    "arctic-monkeys"
+  ],
+  "author": "Velvet Chat",
+  "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.6.1"
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
