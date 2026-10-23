@@ -1,4 +1,4 @@
-// server.js - Velvet Chat Server (Node.js + Socket.io)
+// server.js - Velvet Chat Server (AM Edition)
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -7,11 +7,12 @@ const { Server } = require('socket.io');
 const { check } = require('./filter');
 
 const PORT = process.env.PORT || 3000;
-const TABLE_MS = 10 * 60 * 1000;    // เวลาต่อโต๊ะ (10 นาที)[cite: 2]
-const REMATCH_AFTER_MS = 15 * 1000; // รอนานเกินนี้ถึงยอมให้เจอคนเดิมซ้ำ[cite: 2]
+const TABLE_MS = 10 * 60 * 1000;    // เวลาต่อมวน 10 นาที
+const IDLE_THRESHOLD_MS = 30 * 1000; // เงียบเกิน 30 วินาที ไหม้เร็วขึ้น 2 เท่า
+const REMATCH_AFTER_MS = 15 * 1000; // 15 วินาทีถึงยอมให้สุ่มเจอคนเดิม
 const MAX_LEN = 500;
-const MIN_GAP_MS = 400;             // กันส่งข้อความรัวเกินไป[cite: 2]
-const MAX_STRIKES = 3;              // ส่งข้อความต้องห้ามครบ 3 ครั้ง = พักการใช้งาน[cite: 2]
+const MIN_GAP_MS = 400;             // กันส่งข้อความรัวเกินไป
+const MAX_STRIKES = 3;              // ส่งคำต้องห้ามครบ 3 ครั้ง = พักการใช้งาน
 const STRIKE_WINDOW_MS = 10 * 60 * 1000;
 const COOLDOWN_MS = 2 * 60 * 1000;
 
@@ -21,68 +22,24 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const ANIMALS = [
-  ['สุนัขซื่อสัตย์', '🐶'], ['สุนัขจอมซน', '🐶'],
-  ['แมวส้มจอมซน', '🐱'], ['แมวดำเร้นลับ', '🐱'],
-  ['หนูตัวจิ๋ว', '🐭'], ['หนูสายสปีด', '🐭'],
-  ['กระต่ายดวงจันทร์', '🐰'], ['กระต่ายสายสปีด', '🐰'],
-  ['จิ้งจอกเจ้าเล่ห์', '🦊'], ['จิ้งจอกเก้าหาง', '🦊'],
-  ['หมีง่วงยามดึก', '🐻'], ['หมีใหญ่ใจดี', '🐻'],
-  ['แพนด้าขอบตาดำ', '🐼'], ['แพนด้าจอมกินไผ่', '🐼'],
-  ['โคอาลาสโลว์ไลฟ์', '🐨'], ['โคอาล่านอนอืด', '🐨'],
-
-  // --- สัตว์ใหญ่ / สัตว์ล่าเหยื่อ ---
-  ['เสือโคร่งหน้านิ่ง', '🐯'], ['เสือดาวสายลม', '🐯'],
-  ['สิงโตเจ้าป่า', '🦁'], ['สิงโตแผงคอทอง', '🦁'],
-  ['วัวอารมณ์ดี', '🐮'], ['วัวน้อยกินหญ้า', '🐮'],
-  ['หมูชมพูอวบอ้วน', '🐷'], ['หมูจอมกินแหลก', '🐷'],
-  ['ลิงจอมซน', '🐵'], ['ลิงป่วนห้องแชท', '🐵'],
-  ['ม้าพยศสายสปีด', '🐴'], ['ม้าขาวทรงเสน่ห์', '🐴'],
-  ['แกะปุยเมฆ', '🐑'], ['แกะนุ่มฟู', '🐑'],
-  ['อูฐท่องทะเลทราย', '🐪'], ['อูฐนักอดทน', '🐪'],
-  ['ยีราฟคอยาว', '🦒'], ['ยีราฟผู้มองการณ์ไกล', '🦒'],
-  ['ช้างน้อยใจดี', '🐘'], ['ช้างทรงพลัง', '🐘'],
-  ['แรดจอมนิ่ง', '🦏'], ['แรดจอมลุย', '🦏'],
-  ['ม้าลายลายทาง', '🦓'], ['ม้าลายสายอินดี้', '🦓'],
-  ['กวางน้อยในพงศา', '🦌'], ['กวางเขาเรืองแสง', '🦌'],
-  ['จิงโจ้นักหมัดหนัก', '🦘'], ['จิงโจ้สายกระโดด', '🦘'],
-
-  // --- สัตว์อุจจาระ / สัตว์อุจจาระปีก ---
-  ['นกอินทรีตาคม', '🦅'], ['นกอินทรีจ้าวเวหา', '🦅'],
-  ['เป็ดน้อยก๊าบๆ', '🦆'], ['เป็ดนักลอยน้ำ', '🦆'],
-  ['หงส์สง่างาม', '🦢'], ['หงส์ขาวไร้ตำหนิ', '🦢'],
-  ['นกฮูกผู้รอบรู้', '🦉'], ['นกฮูกท่องราตรี', '🦉'],
-  ['ฟลามิงโกชมพู', '🦩'], ['ฟลามิงโกสายยืนเดียว', '🦩'],
-  ['นกยูงรำแพน', '🦚'], ['นกยูงหลากสีสัน', '🦚'],
-  ['นกแก้วช่างพูด', '🦜'], ['นกแก้วพูดมาก', '🦜'],
-  ['เพนกวินชุดทักซิโด้', '🐧'], ['เพนกวินเดินเตาะแตะ', '🐧'],
-
-  // --- สัตว์ครึ่งบกครึ่งน้ำ / เลื้อยคลาน ---
-  ['กบนักกระโดด', '🐸'], ['กบร้องยามฝนตก', '🐸'],
-  ['จระเข้นอนนิ่ง', '🐊'], ['จระเข้กรามเหล็ก', '🐊'],
-  ['เต่าสโลว์ไลฟ์', '🐢'], ['เต่าอาวุโส', '🐢'],
-  ['กิ้งก่าเปลี่ยนสี', '🦎'], ['กิ้งก่าพรางตัว', '🦎'],
-  ['งูพิษเร้นลับ', '🐍'], ['งูอสรพิษลึกลับ', '🐍'],
-
-  // --- สัตว์ใต้ท้องทะเล ---
-  ['วาฬยักษ์ใจดี', '🐳'], ['วาฬดนตรีใต้ทะเล', '🐳'],
-  ['โลมาแสนรู้', '🐬'], ['โลมาอารมณ์ดี', '🐬'],
-  ['ฉลามนักล่า', '🦈'], ['ฉลามดุร้าย', '🦈'],
-  ['ปลาว่ายทวนน้ำ', '🐟'], ['ปลาการ์ตูนตัวจิ๋ว', '🐟'],
-  ['หมวดแปดหนวด', '🐙'], ['ปลาหมึกจอมพ่นหมึก', '🐙'],
-  ['ปูหนีบจอมกวน', '🦀'], ['ปูก้ามใหญ่', '🦀'],
-  ['กุ้งตัวใส', '🦐'], ['กุ้งดีดขัน', '🦐'],
-
-  // --- แมลงน่ารัก / ตัวจิ๋ว ---
-  ['ผีเสื้อโบยบิน', '🦋'], ['ผีเสื้อแสนสวย', '🦋'],
-  ['ผึ้งน้อยขยัน', '🐝'], ['ผึ้งผลิตน้ำหวาน', '🐝'],
-  ['เต่าทองนำโชค', '🐞'], ['เต่าทองตัวจิ๋ว', '🐞'],
-  ['แมงมุมชักใย', '🕷️'], ['แมงมุมเร้นลับ', '🕷️']
+  ['สุนัข', '🐶'], ['แมว', '🐱'], ['หนู', '🐭'], ['กระต่าย', '🐰'],
+  ['สุนัขจิ้งจอก', '🦊'], ['หมี', '🐻'], ['แพนด้า', '🐼'], ['โคอาลา', '🐨'],
+  ['เสือ', '🐯'], ['สิงโต', '🦁'], ['วัว', '🐮'], ['หมู', '🐷'],
+  ['ลิง', '🐵'], ['ม้า', '🐴'], ['แกะ', '🐑'], ['อูฐ', '🐪'],
+  ['ยีราฟ', '🦒'], ['ช้าง', '🐘'], ['แรด', '🦏'], ['ม้าลาย', '🦓'],
+  ['กวาง', '🦌'], ['จิงโจ้', '🦘'], ['นกอินทรี', '🦅'], ['เป็ด', '🦆'],
+  ['หงส์', '🦢'], ['นกฮูก', '🦉'], ['นกฟลามิงโก', '🦩'], ['นกยูง', '🦚'],
+  ['นกแก้ว', '🦜'], ['เพนกวิน', '🐧'], ['กบ', '🐸'], ['จระเข้', '🐊'],
+  ['เต่า', '🐢'], ['กิ้งก่า', '🦎'], ['งู', '🐍'], ['วาฬ', '🐳'],
+  ['โลมา', '🐬'], ['ฉลาม', '🦈'], ['ปลา', '🐟'], ['ปลาหมึก', '🐙'],
+  ['ปู', '🦀'], ['กุ้ง', '🦐'], ['ผีเสื้อ', '🦋'], ['ผึ้ง', '🐝'],
+  ['เต่าทอง', '🐞'], ['แมงมุม', '🕷️']
 ];
 const MOODS = ['ใจดี', 'ง่วง', 'ขี้เล่น', 'เงียบ', 'อารมณ์ดี', 'ช่างคิด', 'ใจเย็น', 'ซน', 'ร่าเริง', 'อบอุ่น'];
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-const users = new Map();  // socket.id -> user[cite: 2]
-const tables = new Map(); // tableId -> table[cite: 2]
+const users = new Map();  // socket.id -> user
+const tables = new Map(); // tableId -> table
 let queue = [];
 let tableSeq = 0;
 
@@ -90,7 +47,7 @@ function newUser(socket) {
   const [animal, emoji] = pick(ANIMALS);
   return {
     id: socket.id, socket, emoji, nick: `${animal}${pick(MOODS)}`,
-    state: 'idle', tableId: null, since: 0, recent: null, lastMsg: 0, seq: 0,
+    status: '🟢 Available', music: '', state: 'idle', tableId: null, since: 0, recent: null, lastMsg: 0, seq: 0,
     strikes: [], banUntil: 0,
   };
 }
@@ -137,23 +94,49 @@ function tryMatch() {
 function openTable(a, b) {
   const t = {
     id: ++tableSeq, a: a.id, b: b.id,
-    endsAt: Date.now() + TABLE_MS, extend: new Set(), timer: null,
+    remainingMs: TABLE_MS,
+    lastInteraction: Date.now(),
+    isSpeedUp: false,
+    timer: null,
+    extendVotes: new Map()
   };
-  t.timer = setTimeout(() => closeTable(t, 'time'), TABLE_MS);
+
+  t.timer = setInterval(() => updateTableTimer(t), 1000);
   tables.set(t.id, t);
+
   for (const [me, other] of [[a, b], [b, a]]) {
     me.state = 'seated';
     me.tableId = t.id;
     me.seq = 0;
     me.socket.emit('seated', {
-      partner: other.nick, emoji: other.emoji, ms: TABLE_MS, total: TABLE_MS,
+      partner: other.nick, emoji: other.emoji, status: other.status, music: other.music, ms: TABLE_MS, total: TABLE_MS,
     });
   }
 }
 
+function updateTableTimer(t) {
+  const now = Date.now();
+  const idleTime = now - t.lastInteraction;
+  
+  t.isSpeedUp = idleTime > IDLE_THRESHOLD_MS;
+  const decrement = t.isSpeedUp ? 2000 : 1000;
+  t.remainingMs -= decrement;
+
+  if (t.remainingMs <= 0) {
+    t.remainingMs = 0;
+    clearInterval(t.timer);
+    io.to(t.a).emit('time-expired');
+    io.to(t.b).emit('time-expired');
+    return;
+  }
+
+  io.to(t.a).emit('timer-tick', { ms: t.remainingMs, speedUp: t.isSpeedUp });
+  io.to(t.b).emit('timer-tick', { ms: t.remainingMs, speedUp: t.isSpeedUp });
+}
+
 function closeTable(t, reason, actorId) {
   if (!tables.has(t.id)) return;
-  clearTimeout(t.timer);
+  clearInterval(t.timer);
   tables.delete(t.id);
   for (const id of [t.a, t.b]) {
     const u = users.get(id);
@@ -170,7 +153,7 @@ function closeTable(t, reason, actorId) {
     if (reason === 'report') r = isActor ? 'report' : 'partner-left';
     if (reason === 'violations') r = 'partner-left';
     u.socket.emit('ended', { reason: r });
-    enqueue(u); // สุ่มโต๊ะใหม่อัตโนมัติ[cite: 2]
+    enqueue(u);
   }
 }
 
@@ -199,6 +182,12 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('update-profile', (profile) => {
+    u.status = profile.status;
+    u.music = profile.music;
+    otherOf(u)?.socket.emit('partner-profile-changed', profile);
+  });
+
   socket.on('msg', (text, ack) => {
     const reply = typeof ack === 'function' ? ack : () => {};
     if (u.state !== 'seated' || typeof text !== 'string') return reply({ err: 'state' });
@@ -219,15 +208,17 @@ io.on('connection', (socket) => {
       }
       return;
     }
+
+    const t = tables.get(u.tableId);
+    if (t) {
+      t.lastInteraction = now;
+      t.isSpeedUp = false;
+    }
+
     u.lastMsg = now;
     u.seq += 1;
     reply({ seq: u.seq });
     otherOf(u)?.socket.emit('msg', { seq: u.seq, text: clean, ts: now });
-  });
-
-  socket.on('read', (upto) => {
-    if (u.state !== 'seated' || !Number.isInteger(upto) || upto < 1) return;
-    otherOf(u)?.socket.emit('read', upto);
   });
 
   socket.on('typing', (on) => {
@@ -235,27 +226,24 @@ io.on('connection', (socket) => {
     otherOf(u)?.socket.emit('typing', !!on);
   });
 
-  socket.on('extend', () => {
+  socket.on('vote-extend', (agree) => {
     if (u.state !== 'seated') return;
     const t = tables.get(u.tableId);
-    t.extend.add(u.id);
-    if (t.extend.size < 2) return;
-    t.extend.clear();
-    clearTimeout(t.timer);
-    t.endsAt = Date.now() + TABLE_MS;
-    t.timer = setTimeout(() => closeTable(t, 'time'), TABLE_MS);
-    for (const id of [t.a, t.b]) users.get(id)?.socket.emit('extended', { ms: TABLE_MS });
-  });
+    if (!t) return;
 
-  socket.on('report', (reason) => {
-    if (u.state !== 'seated') return;
-    const other = otherOf(u);
-    const line = JSON.stringify({
-      at: new Date().toISOString(), reporter: u.nick, reported: other?.nick,
-      reportedId: other?.id, reason: String(reason || '').slice(0, 100),
-    });
-    fs.appendFile(path.join(__dirname, 'reports.log'), line + '\n', () => {});
-    closeTable(tables.get(u.tableId), 'report', u.id);
+    t.extendVotes.set(u.id, agree);
+
+    if (!agree) {
+      closeTable(t, 'time-up-new-match');
+    } else if (t.extendVotes.size === 2 && Array.from(t.extendVotes.values()).every(v => v === true)) {
+      t.remainingMs = TABLE_MS;
+      t.lastInteraction = Date.now();
+      t.extendVotes.clear();
+      t.timer = setInterval(() => updateTableTimer(t), 1000);
+
+      io.to(t.a).emit('time-extended');
+      io.to(t.b).emit('time-extended');
+    }
   });
 
   socket.on('disconnect', () => {
@@ -269,4 +257,4 @@ io.on('connection', (socket) => {
 });
 
 setInterval(tryMatch, 5000);
-server.listen(PORT, () => console.log(`โต๊ะคุยรันอยู่ที่ http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
