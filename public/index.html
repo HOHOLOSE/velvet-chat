@@ -30,7 +30,7 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      min-height: 100dvh; /* Dynamic Viewport Height for Mobile */
+      min-height: 100dvh;
       overflow: hidden;
       position: relative;
     }
@@ -159,8 +159,8 @@
     .chat-layout {
       display: flex;
       width: 100%;
-      height: 75vh;
-      height: 75dvh;
+      height: 78vh;
+      height: 78dvh;
       background: rgba(17, 17, 17, 0.92);
       backdrop-filter: blur(8px);
       border: 1px solid #222222;
@@ -173,16 +173,17 @@
       width: 35%;
       background: rgba(13, 13, 13, 0.95);
       border-right: 1px solid #222222;
-      padding: 20px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      overflow-y: auto;
     }
-    .profile-card { display: flex; flex-direction: column; gap: 10px; }
+    .profile-card { display: flex; flex-direction: column; gap: 8px; }
     .partner-avatar {
-      font-size: 3rem;
+      font-size: 2.8rem;
       text-align: center;
-      padding: 10px;
+      padding: 8px;
       background: #141414;
       border: 1px solid #262626;
       border-radius: 8px;
@@ -209,12 +210,35 @@
       padding: 6px;
       border-radius: 4px;
       border: 1px solid #222222;
+      word-break: break-all;
+    }
+    .status-badge-partner a {
+      color: #1db954;
+      text-decoration: underline;
     }
 
-    .status-section { margin-top: 5px; }
+    .my-animal-box {
+      background: #141414;
+      border: 1px dashed #333333;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      color: #aaaaaa;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .my-animal-name {
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .status-section { margin-top: 4px; }
     .status-label {
-      font-size: 0.7rem;
-      letter-spacing: 2px;
+      font-size: 0.68rem;
+      letter-spacing: 1.5px;
       color: #666666;
       margin-bottom: 4px;
       text-transform: uppercase;
@@ -234,7 +258,7 @@
     }
     .status-select:hover, .now-playing-input:focus { border-color: #555555; }
 
-    .sidebar-footer { display: flex; flex-direction: column; gap: 10px; }
+    .sidebar-footer { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
     .datetime-display {
       font-size: 0.7rem;
       letter-spacing: 1.5px;
@@ -245,7 +269,7 @@
     .cigarette-timer-container {
       background: #141414;
       border: 1px solid #222222;
-      padding: 10px;
+      padding: 8px 10px;
       border-radius: 6px;
     }
     .cigarette-label {
@@ -260,7 +284,7 @@
     .speed-warning { color: #ff4444; font-weight: bold; animation: pulse 0.8s infinite alternate; }
 
     .cigarette-bar {
-      height: 10px;
+      height: 8px;
       background: #222222;
       border-radius: 2px;
       position: relative;
@@ -412,449 +436,21 @@
     }
     .sound-wave-icon:not(.playing) span { height: 20% !important; animation: none !important; }
 
-    /* ==========================================
-       MOBILE RESPONSIVE STYLES (สำหรับมือถือ)
-       ========================================== */
+    /* MOBILE RESPONSIVE */
     @media (max-width: 768px) {
       .am-title { font-size: 1.6rem; letter-spacing: 5px; }
       .am-wave-svg { height: 35px; }
       
-      .chat-layout {
-        flex-direction: column;
-        height: 80vh;
-        height: 80dvh;
-      }
+      .chat-layout { flex-direction: column; height: 82vh; height: 82dvh; }
 
       .sidebar {
         width: 100%;
-        padding: 12px;
+        padding: 10px;
         border-right: none;
         border-bottom: 1px solid #222222;
-        flex-direction: row;
-        align-items: center;
-        gap: 12px;
+        flex-direction: column;
+        gap: 8px;
       }
 
-      .profile-card {
-        flex-direction: row;
-        align-items: center;
-        gap: 10px;
-        flex: 1;
-      }
-
-      .partner-avatar { font-size: 1.8rem; padding: 6px; }
-      .partner-name { font-size: 0.85rem; text-align: left; }
-      
-      .status-section { margin-top: 0; display: none; /* ซ่อนในแถบสั้นบนมือถือเพื่อประหยัดพื้นที่ */ }
-      
-      .sidebar-footer {
-        flex: 1;
-        gap: 4px;
-      }
-      .datetime-display { display: none; }
-      .cigarette-timer-container { padding: 6px; }
-
-      .chat-area { width: 100%; flex: 1; }
-      .messages-container { padding: 12px; gap: 8px; }
-
-      .chat-input-bar { padding: 8px; gap: 6px; }
-      .chat-input { padding: 8px 10px; font-size: 0.85rem; }
-      .chat-actions .btn { padding: 8px 12px !important; font-size: 0.75rem; letter-spacing: 1px; }
-
-      .bottom-controls {
-        bottom: 8px;
-        left: 10px;
-        right: 10px;
-        font-size: 0.65rem;
-      }
-      .bgm-bar, .rain-toggle { padding: 4px 8px; }
-    }
-  </style>
-</head>
-<body>
-
-  <canvas id="rain-canvas"></canvas>
-  <audio id="bgm" loop src="/music/bgm.mp3"></audio>
-
-  <!-- LANDING VIEW -->
-  <div id="view-landing" class="view-section active">
-    <div class="header-container">
-      <h1 class="am-title">VELVET CHAT</h1>
-      <svg class="am-wave-svg" viewBox="0 0 320 50">
-        <path d="M 0 25 Q 40 25 80 5 Q 120 45 160 5 Q 200 45 240 5 Q 280 25 320 25" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.9"/>
-      </svg>
-      <div class="online-badge">ONLINE: <span id="landing-online-count" style="color:#fff;">1</span></div>
-    </div>
-    <button class="btn" onclick="requestMatch()">MATCH</button>
-  </div>
-
-  <!-- MATCHING VIEW -->
-  <div id="view-matching" class="view-section">
-    <div class="header-container">
-      <h1 class="am-title">SEARCHING</h1>
-      <svg class="am-wave-svg animated-wave" viewBox="0 0 320 50">
-        <path d="M 0 25 Q 40 5 80 45 Q 120 5 160 45 Q 200 5 240 45 Q 280 25 320 25" fill="none" stroke="#ffffff" stroke-width="2"/>
-      </svg>
-      <div class="matching-status">FINDING A STRANGER...</div>
-      <div class="matching-subtext" id="matching-subtext">TUNING FREQUENCY...</div>
-    </div>
-    <button class="btn btn-secondary" onclick="cancelMatch()">CANCEL</button>
-  </div>
-
-  <!-- CHAT VIEW -->
-  <div id="view-chat" class="view-section">
-    <div class="chat-layout">
-      <div class="sidebar">
-        <div class="profile-card">
-          <div class="partner-avatar" id="partner-emoji">🐱</div>
-          <div>
-            <div class="partner-name" id="partner-name">STRANGER</div>
-            <div class="status-badge-partner" id="partner-status-display" style="margin-top:2px;">🟢 Available</div>
-            <div class="status-badge-partner" id="partner-music-display" style="color: #aaa; font-size: 0.7rem; margin-top:2px;">🎵 Vibe: None</div>
-          </div>
-          
-          <div class="status-section">
-            <div class="status-label">MY STATUS</div>
-            <select class="status-select" id="my-status" onchange="updateProfileInfo()">
-              <option value="🟢 Available">🟢 Available</option>
-              <option value="🎧 Vibing">🎧 Vibing</option>
-              <option value="🌙 Do Not Disturb">🌙 Do Not Disturb</option>
-            </select>
-            <div class="status-label" style="margin-top: 4px;">NOW PLAYING</div>
-            <input type="text" class="now-playing-input" id="my-music" placeholder="🎵 Song / Artist..." oninput="updateProfileInfo()" maxlength="30">
-          </div>
-        </div>
-
-        <div class="sidebar-footer">
-          <div class="cigarette-timer-container">
-            <div class="cigarette-label">
-              <span>CIGARETTE TIMER</span>
-              <span id="timer-text">10:00</span>
-            </div>
-            <div class="cigarette-bar">
-              <div class="cigarette-filter"></div>
-              <div class="cigarette-body" id="cigarette-body" style="width: 80%;"></div>
-              <div class="cigarette-ash"></div>
-            </div>
-          </div>
-
-          <div class="datetime-display" id="datetime-text">MON 00:00 AM</div>
-        </div>
-      </div>
-
-      <div class="chat-area">
-        <div class="messages-container" id="chat-messages">
-          <div class="message-bubble system">CONNECTED TO STRANGER</div>
-        </div>
-
-        <div class="typing-indicator" id="typing-indicator"></div>
-
-        <div class="chat-input-bar">
-          <input type="text" class="chat-input" id="chat-input" placeholder="Write a message..." oninput="handleTyping()" onkeydown="handleKeyPress(event)">
-          <div class="chat-actions">
-            <button class="btn" style="padding: 12px 18px;" onclick="sendChatMessage()">SEND</button>
-            <button class="btn btn-secondary" style="padding: 12px 14px;" onclick="nextPartner()">NEXT</button>
-            <button class="btn btn-secondary" style="padding: 12px 14px; color:#ff4444; border-color:#442222;" onclick="exitChat()">EXIT</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="expired-modal">
-    <div class="modal-box">
-      <div class="modal-title">CIGARETTE IS OUT</div>
-      <div class="modal-desc">คุณคิดว่าจะพอแล้วรึยัง? ต้องการต่อเพิ่มอีกมวนก่อนมั้ย?</div>
-      <div class="modal-buttons">
-        <button class="btn btn-secondary" onclick="voteExtend(false)">ไม่ (หาคนใหม่)</button>
-        <button class="btn" onclick="voteExtend(true)">ใช่ (คุยต่อ)</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="bottom-controls">
-    <div class="bgm-bar" onclick="toggleBGM()">
-      <div class="sound-wave-icon" id="wave-icon">
-        <span></span><span></span><span></span><span></span>
-      </div>
-      AM ATMOSPHERE
-    </div>
-    <div class="rain-toggle" onclick="toggleRain()">
-      🌧️ RAIN: <span id="rain-status" style="color: #fff;">ON</span>
-    </div>
-  </div>
-
-  <script>
-    const socket = io();
-
-    // RAIN CANVAS
-    const canvas = document.getElementById('rain-canvas');
-    const ctx = canvas.getContext('2d');
-    let rainActive = true;
-    let raindrops = [];
-    const maxDrops = 140;
-
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    for (let i = 0; i < maxDrops; i++) {
-      raindrops.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        length: Math.random() * 25 + 10,
-        speed: Math.random() * 9 + 6,
-        opacity: Math.random() * 0.5 + 0.2
-      });
-    }
-
-    function animateRain() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (rainActive) {
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = 'rgba(210, 230, 255, 0.65)';
-        for (let drop of raindrops) {
-          ctx.globalAlpha = drop.opacity;
-          ctx.beginPath();
-          ctx.moveTo(drop.x, drop.y);
-          ctx.lineTo(drop.x - 1, drop.y + drop.length);
-          ctx.stroke();
-
-          drop.y += drop.speed;
-          drop.x -= 0.6;
-
-          if (drop.y > canvas.height) {
-            drop.y = -30;
-            drop.x = Math.random() * canvas.width;
-          }
-        }
-      }
-      requestAnimationFrame(animateRain);
-    }
-    animateRain();
-
-    function toggleRain() {
-      rainActive = !rainActive;
-      document.getElementById('rain-status').innerText = rainActive ? "ON" : "OFF";
-      document.getElementById('rain-status').style.color = rainActive ? "#fff" : "#666";
-    }
-
-    // CLICK SOUND
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playMouseClickSound() {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03);
-      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.03);
-    }
-
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('button, select, input, .btn, .bgm-bar, .rain-toggle')) {
-        playMouseClickSound();
-      }
-    });
-
-    const viewLanding = document.getElementById('view-landing');
-    const viewMatching = document.getElementById('view-matching');
-    const viewChat = document.getElementById('view-chat');
-    
-    const landingOnlineCount = document.getElementById('landing-online-count');
-    const chatMessages = document.getElementById('chat-messages');
-    const chatInput = document.getElementById('chat-input');
-    const partnerName = document.getElementById('partner-name');
-    const partnerEmoji = document.getElementById('partner-emoji');
-    const partnerStatusDisplay = document.getElementById('partner-status-display');
-    const partnerMusicDisplay = document.getElementById('partner-music-display');
-    const myStatusSelect = document.getElementById('my-status');
-    const myMusicInput = document.getElementById('my-music');
-    const typingIndicator = document.getElementById('typing-indicator');
-    
-    const timerText = document.getElementById('timer-text');
-    const cigaretteBody = document.getElementById('cigarette-body');
-    const datetimeText = document.getElementById('datetime-text');
-    const expiredModal = document.getElementById('expired-modal');
-    const bgm = document.getElementById('bgm');
-    const waveIcon = document.getElementById('wave-icon');
-    const matchingSubtext = document.getElementById('matching-subtext');
-
-    let typingTimeout = null;
-    let matchingInterval = null;
-
-    const matchingPhrases = [
-      "TUNING FREQUENCY...",
-      "SCANNING LATE NIGHT SIGNALS...",
-      "WAITING UNDER THE NEON LIGHTS...",
-      "ALMOST THERE..."
-    ];
-
-    document.body.addEventListener('click', () => {
-      if (bgm.paused) {
-        bgm.play().then(() => {
-          waveIcon.classList.add('playing');
-        }).catch(() => {});
-      }
-    }, { once: true });
-
-    function toggleBGM() {
-      if (bgm.paused) {
-        bgm.play();
-        waveIcon.classList.add('playing');
-      } else {
-        bgm.pause();
-        waveIcon.classList.remove('playing');
-      }
-    }
-
-    function showView(view) {
-      viewLanding.classList.remove('active');
-      viewMatching.classList.remove('active');
-      viewChat.classList.remove('active');
-
-      if (view === 'landing') viewLanding.classList.add('active');
-      if (view === 'matching') {
-        viewMatching.classList.add('active');
-        startMatchingAnimation();
-      } else {
-        stopMatchingAnimation();
-      }
-      if (view === 'chat') viewChat.classList.add('active');
-    }
-
-    function startMatchingAnimation() {
-      let idx = 0;
-      matchingSubtext.innerText = matchingPhrases[0];
-      matchingInterval = setInterval(() => {
-        idx = (idx + 1) % matchingPhrases.length;
-        matchingSubtext.innerText = matchingPhrases[idx];
-      }, 2500);
-    }
-
-    function stopMatchingAnimation() {
-      if (matchingInterval) clearInterval(matchingInterval);
-    }
-
-    function updateClock() {
-      const now = new Date();
-      const options = { weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-      datetimeText.innerText = now.toLocaleString('en-US', options).toUpperCase();
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // SOCKET EVENTS
-    socket.on('online', (count) => { landingOnlineCount.innerText = count; });
-    socket.on('waiting', () => { showView('matching'); });
-
-    socket.on('seated', (data) => {
-      partnerName.innerText = data.partner;
-      partnerEmoji.innerText = data.emoji;
-      partnerStatusDisplay.innerText = data.status || '🟢 Available';
-      partnerMusicDisplay.innerText = data.music ? `🎵 Vibe: ${data.music}` : '🎵 Vibe: None';
-      chatMessages.innerHTML = `<div class="message-bubble system">CONNECTED WITH ${data.emoji} ${data.partner}</div>`;
-      expiredModal.classList.remove('active');
-      showView('chat');
-      updateProfileInfo();
-    });
-
-    socket.on('timer-tick', (data) => {
-      const totalSecs = Math.floor(data.ms / 1000);
-      const mins = Math.floor(totalSecs / 60);
-      const secs = totalSecs % 60;
-      
-      timerText.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-      if (data.speedUp) {
-        timerText.classList.add('speed-warning');
-      } else {
-        timerText.classList.remove('speed-warning');
-      }
-
-      const percentage = (data.ms / (10 * 60 * 1000)) * 80;
-      cigaretteBody.style.width = `${Math.max(0, percentage)}%`;
-    });
-
-    socket.on('time-expired', () => { expiredModal.classList.add('active'); });
-    socket.on('time-extended', () => {
-      expiredModal.classList.remove('active');
-      appendMessage('system', 'EXTENDED 10 MORE MINUTES');
-    });
-
-    socket.on('partner-profile-changed', (profile) => {
-      partnerStatusDisplay.innerText = profile.status || '🟢 Available';
-      partnerMusicDisplay.innerText = profile.music ? `🎵 Vibe: ${profile.music}` : '🎵 Vibe: None';
-    });
-
-    socket.on('msg', (data) => { appendMessage('partner', data.text); });
-    socket.on('typing', (on) => { typingIndicator.innerText = on ? `${partnerName.innerText} is typing...` : ''; });
-
-    socket.on('ended', (data) => {
-      expiredModal.classList.remove('active');
-      if (data.reason === 'time-up-new-match' || data.reason === 'partner-left') {
-        appendMessage('system', 'CHAT ENDED. FINDING NEW MATCH...');
-      }
-      if (data.self) showView('landing');
-    });
-
-    // USER ACTIONS
-    function requestMatch() { socket.emit('sit'); }
-    function cancelMatch() { socket.emit('leave'); showView('landing'); }
-
-    function updateProfileInfo() {
-      const status = myStatusSelect.value;
-      const music = myMusicInput.value.trim();
-      socket.emit('update-profile', { status, music });
-    }
-
-    function sendChatMessage() {
-      const text = chatInput.value.trim();
-      if (text) {
-        socket.emit('msg', text, (res) => {
-          if (res && res.err) {
-            if (res.err === 'filtered') alert(`ตรวจพบคำต้องห้าม! (${res.strikes}/${res.max})`);
-            return;
-          }
-          appendMessage('me', text);
-          chatInput.value = '';
-          socket.emit('typing', false);
-        });
-      }
-    }
-
-    function handleKeyPress(e) { if (e.key === 'Enter') sendChatMessage(); }
-    function handleTyping() {
-      socket.emit('typing', true);
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => { socket.emit('typing', false); }, 1500);
-    }
-
-    function voteExtend(agree) {
-      socket.emit('vote-extend', agree);
-      if (agree) {
-        expiredModal.classList.remove('active');
-        appendMessage('system', 'WAITING FOR PARTNER RESPONSE...');
-      }
-    }
-
-    function nextPartner() { socket.emit('leave'); showView('matching'); }
-    function exitChat() { socket.emit('leave'); showView('landing'); }
-
-    function appendMessage(sender, text) {
-      const msgDiv = document.createElement('div');
-      msgDiv.classList.add('message-bubble', sender);
-      msgDiv.innerText = text;
-      chatMessages.appendChild(msgDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  </script>
-</body>
-</html>
+      .profile-card { flex-direction: column; width: 100%; }
+      .partner-avatar { font-size: 2rem; padding: 4px; }
