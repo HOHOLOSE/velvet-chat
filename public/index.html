@@ -379,9 +379,7 @@
     .chat-input:focus { border-color: #555555; }
     .chat-actions { display: flex; gap: 6px; }
 
-    /* ==========================================
-       MODAL & WARNING POPUP STYLES
-       ========================================== */
+    /* MODAL & WARNING STYLES */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
@@ -399,93 +397,50 @@
     .modal-desc { font-size: 0.8rem; color: #888888; margin-bottom: 20px; line-height: 1.5; }
     .modal-buttons { display: flex; gap: 10px; justify-content: center; }
 
-    /* Warning Popup Specifics */
     .warning-modal-box {
       background: #160c0c;
       border: 1px solid #ff4444;
       box-shadow: 0 0 25px rgba(255, 68, 68, 0.3);
     }
-    .warning-modal-box .modal-title {
-      color: #ff4444;
-      text-shadow: 0 0 8px rgba(255, 68, 68, 0.5);
-    }
+    .warning-modal-box .modal-title { color: #ff4444; text-shadow: 0 0 8px rgba(255, 68, 68, 0.5); }
 
     .bottom-controls {
-      position: fixed;
-      bottom: 12px;
-      left: 15px;
-      right: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 100;
-      font-size: 0.7rem;
-      letter-spacing: 1.5px;
-      color: #888888;
+      position: fixed; bottom: 12px; left: 15px; right: 15px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 100; font-size: 0.7rem; letter-spacing: 1.5px; color: #888888;
     }
 
     .bgm-bar, .rain-toggle {
-      background: rgba(18, 18, 18, 0.9);
-      border: 1px solid #262626;
-      padding: 6px 10px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      background: rgba(18, 18, 18, 0.9); border: 1px solid #262626;
+      padding: 6px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px;
       transition: all 0.2s;
     }
     .bgm-bar:hover, .rain-toggle:hover { color: #ffffff; border-color: #555555; }
 
-    .sound-wave-icon {
-      display: inline-flex;
-      align-items: flex-end;
-      gap: 3px;
-      height: 12px;
-    }
-    .sound-wave-icon span {
-      width: 2px;
-      height: 100%;
-      background-color: #ffffff;
-      border-radius: 1px;
-    }
+    .sound-wave-icon { display: inline-flex; align-items: flex-end; gap: 3px; height: 12px; }
+    .sound-wave-icon span { width: 2px; height: 100%; background-color: #ffffff; border-radius: 1px; }
     .sound-wave-icon.playing span:nth-child(1) { animation: soundWave 0.8s infinite ease-in-out alternate; }
     .sound-wave-icon.playing span:nth-child(2) { animation: soundWave 1.2s infinite ease-in-out alternate 0.2s; }
     .sound-wave-icon.playing span:nth-child(3) { animation: soundWave 0.6s infinite ease-in-out alternate 0.4s; }
     .sound-wave-icon.playing span:nth-child(4) { animation: soundWave 1.0s infinite ease-in-out alternate 0.1s; }
 
-    @keyframes soundWave {
-      0% { height: 20%; }
-      100% { height: 100%; }
-    }
+    @keyframes soundWave { 0% { height: 20%; } 100% { height: 100%; } }
     .sound-wave-icon:not(.playing) span { height: 20% !important; animation: none !important; }
 
     @media (max-width: 768px) {
       .am-title { font-size: 1.6rem; letter-spacing: 5px; }
       .am-wave-svg { height: 35px; }
-      
       .chat-layout { flex-direction: column; height: 82vh; height: 82dvh; }
-
-      .sidebar {
-        width: 100%;
-        padding: 10px;
-        border-right: none;
-        border-bottom: 1px solid #222222;
-        flex-direction: column;
-        gap: 6px;
-      }
-
+      .sidebar { width: 100%; padding: 10px; border-right: none; border-bottom: 1px solid #222222; flex-direction: column; gap: 6px; }
       .profile-card { flex-direction: column; width: 100%; }
       .partner-profile-box { padding: 6px; }
       .partner-avatar { font-size: 1.8rem; }
       .partner-name { font-size: 0.85rem; }
-
       .chat-area { width: 100%; flex: 1; }
       .messages-container { padding: 10px; gap: 8px; }
-
       .chat-input-bar { padding: 8px; gap: 6px; }
       .chat-input { padding: 8px 10px; font-size: 0.85rem; }
       .chat-actions .btn { padding: 8px 10px !important; font-size: 0.7rem; letter-spacing: 1px; }
-
       .bottom-controls { bottom: 8px; left: 10px; right: 10px; font-size: 0.65rem; }
       .bgm-bar, .rain-toggle { padding: 4px 8px; }
     }
@@ -581,6 +536,7 @@
           <input type="text" class="chat-input" id="chat-input" placeholder="Write a message..." oninput="handleTyping()" onkeydown="handleKeyPress(event)">
           <div class="chat-actions">
             <button class="btn" style="padding: 10px 16px;" onclick="sendChatMessage()">SEND</button>
+            <button class="btn btn-secondary" style="padding: 10px 12px; color:#ffaa00; border-color:#554422;" onclick="reportPartner()">REPORT</button>
             <button class="btn btn-secondary" style="padding: 10px 12px;" onclick="nextPartner()">NEXT</button>
             <button class="btn btn-secondary" style="padding: 10px 12px; color:#ff4444; border-color:#442222;" onclick="exitChat()">EXIT</button>
           </div>
@@ -601,7 +557,7 @@
     </div>
   </div>
 
-  <!-- WARNING POPUP MODAL (คำหยาบ / พิมพ์รัว) -->
+  <!-- WARNING POPUP MODAL -->
   <div class="modal-overlay" id="warning-modal">
     <div class="modal-box warning-modal-box">
       <div class="modal-title" id="warning-title">⚠️ SYSTEM WARNING</div>
@@ -671,7 +627,7 @@
       updateProfileInfo();
     }
 
-    // Rain Canvas Setup
+    // Canvas Rain
     const canvas = document.getElementById('rain-canvas');
     const ctx = canvas.getContext('2d');
     let rainActive = true;
@@ -768,7 +724,6 @@
     const datetimeText = document.getElementById('datetime-text');
     const expiredModal = document.getElementById('expired-modal');
     
-    // Popup Modal
     const warningModal = document.getElementById('warning-modal');
     const warningTitle = document.getElementById('warning-title');
     const warningDesc = document.getElementById('warning-desc');
@@ -789,19 +744,15 @@
 
     document.body.addEventListener('click', () => {
       if (bgm.paused) {
-        bgm.play().then(() => {
-          waveIcon.classList.add('playing');
-        }).catch(() => {});
+        bgm.play().then(() => { waveIcon.classList.add('playing'); }).catch(() => {});
       }
     }, { once: true });
 
     function toggleBGM() {
       if (bgm.paused) {
-        bgm.play();
-        waveIcon.classList.add('playing');
+        bgm.play(); waveIcon.classList.add('playing');
       } else {
-        bgm.pause();
-        waveIcon.classList.remove('playing');
+        bgm.pause(); waveIcon.classList.remove('playing');
       }
     }
 
@@ -820,8 +771,7 @@
       if (view === 'chat') {
         viewChat.classList.add('active');
         if (!bgm.paused) {
-          bgm.pause();
-          waveIcon.classList.remove('playing');
+          bgm.pause(); waveIcon.classList.remove('playing');
         }
       }
     }
@@ -914,7 +864,7 @@
 
     socket.on('cooldown', (data) => {
       const secs = Math.ceil(data.ms / 1000);
-      showWarningPopup('⚠️ RESTRICTED', `คุณถูกพักการใช้งานชั่วคราวเป็นเวลา ${secs} วินาที เนื่องจากละเมิดกฎกฎระเบียบการใช้ข้อความ`);
+      showWarningPopup('⚠️ RESTRICTED', `คุณถูกพักการใช้งานเป็นเวลา ${secs} วินาที เนื่องจากละเมิดกฎกฎระเบียบการใช้ข้อความ`);
     });
 
     socket.on('ended', (data) => {
@@ -940,9 +890,9 @@
         socket.emit('msg', text, (res) => {
           if (res && res.err) {
             if (res.err === 'filtered') {
-              showWarningPopup('⚠️ คำต้องห้าม!', `พบการใช้คำไม่สุภาพ/คำต้องห้าม! (คำเตือนที่ ${res.strikes}/${res.max} หากครบจะถูกเตะออกทันที)`);
+              showWarningPopup('⚠️ คำต้องห้าม!', `พบการใช้คำไม่สุภาพ/คำต้องห้าม! (คำเตือนที่ ${res.strikes}/${res.max})`);
             } else if (res.err === 'rate') {
-              showWarningPopup('⚠️ ส่งข้อความเร็วเกินไป', 'กรุณารอแปปนึงก่อนส่งข้อความถัดไปครับ (Flood Protection)');
+              showWarningPopup('⚠️ ส่งข้อความเร็วเกินไป', 'กรุณารอแปปนึงก่อนส่งข้อความถัดไปครับ');
             }
             return;
           }
@@ -950,6 +900,14 @@
           chatInput.value = '';
           socket.emit('typing', false);
         });
+      }
+    }
+
+    function reportPartner() {
+      const reason = prompt("กรุณาระบุสาเหตุที่ต้องการรายงาน (เช่น พิมพ์คำหยาบ / ก่อกวน / อนาจาร):", "พิมพ์คำไม่สุภาพ/คุกคาม");
+      if (reason !== null) {
+        socket.emit('report', { reason: reason.trim() });
+        showWarningPopup('🚨 REPORT SENT', 'ส่งรายงานเรียบร้อยแล้ว ระบบกำลังเปลี่ยนคู่สนทนาใหม่ให้ครับ');
       }
     }
 
