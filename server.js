@@ -7,12 +7,12 @@ const { Server } = require('socket.io');
 const { check } = require('./filter');
 
 const PORT = process.env.PORT || 3000;
-const TABLE_MS = 10 * 60 * 1000;    // เวลาต่อมวน 10 นาที
+const TABLE_MS = 10 * 60 * 1000;    // เวลาต่อโต๊ะ 10 นาที[cite: 2]
 const IDLE_THRESHOLD_MS = 30 * 1000; // เงียบเกิน 30 วินาที ไหม้เร็วขึ้น 2 เท่า
-const REMATCH_AFTER_MS = 15 * 1000; // 15 วินาทีถึงยอมให้สุ่มเจอคนเดิม
+const REMATCH_AFTER_MS = 15 * 1000; // 15 วินาทีถึงยอมให้สุ่มเจอคนเดิม[cite: 2]
 const MAX_LEN = 500;
-const MIN_GAP_MS = 400;             // กันส่งข้อความรัวเกินไป
-const MAX_STRIKES = 3;              // ส่งคำต้องห้ามครบ 3 ครั้ง = พักการใช้งาน
+const MIN_GAP_MS = 400;             // กันส่งข้อความรัวเกินไป[cite: 2]
+const MAX_STRIKES = 3;              // ส่งคำต้องห้ามครบ 3 ครั้ง = พักการใช้งาน[cite: 2]
 const STRIKE_WINDOW_MS = 10 * 60 * 1000;
 const COOLDOWN_MS = 2 * 60 * 1000;
 
@@ -38,8 +38,8 @@ const ANIMALS = [
 const MOODS = ['ใจดี', 'ง่วง', 'ขี้เล่น', 'เงียบ', 'อารมณ์ดี', 'ช่างคิด', 'ใจเย็น', 'ซน', 'ร่าเริง', 'อบอุ่น'];
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-const users = new Map();  // socket.id -> user
-const tables = new Map(); // tableId -> table
+const users = new Map();  // socket.id -> user[cite: 2]
+const tables = new Map(); // tableId -> table[cite: 2]
 let queue = [];
 let tableSeq = 0;
 
@@ -153,7 +153,7 @@ function closeTable(t, reason, actorId) {
     if (reason === 'report') r = isActor ? 'report' : 'partner-left';
     if (reason === 'violations') r = 'partner-left';
     u.socket.emit('ended', { reason: r });
-    enqueue(u);
+    enqueue(u); // สุ่มโต๊ะใหม่อัตโนมัติ[cite: 2]
   }
 }
 
@@ -182,10 +182,17 @@ io.on('connection', (socket) => {
     }
   });
 
+  // อัปเดตการตั้งสถานะอิสระ และ URL เพลง real-time
   socket.on('update-profile', (profile) => {
-    u.status = profile.status;
-    u.music = profile.music;
-    otherOf(u)?.socket.emit('partner-profile-changed', profile);
+    if (profile && typeof profile === 'object') {
+      u.status = typeof profile.status === 'string' ? profile.status.trim().slice(0, 30) : '🟢 Available';
+      u.music = typeof profile.music === 'string' ? profile.music.trim().slice(0, 200) : '';
+      
+      otherOf(u)?.socket.emit('partner-profile-changed', {
+        status: u.status,
+        music: u.music
+      });
+    }
   });
 
   socket.on('msg', (text, ack) => {
