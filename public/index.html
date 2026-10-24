@@ -14,7 +14,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    button, select, input, .btn, .bgm-bar, a, .rain-toggle {
+    button, select, input, .btn, .bgm-bar, a, .rain-toggle, .mood-btn {
       cursor: url('https://cur.cursors-4u.net/user/use-1/use154.cur'), pointer !important;
     }
 
@@ -163,97 +163,115 @@
     }
 
     .sidebar {
-      width: 36%;
+      width: 38%;
       background: rgba(13, 13, 13, 0.95);
       border-right: 1px solid #222222;
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow-y: auto;
     }
-    .profile-card { display: flex; flex-direction: column; gap: 8px; }
-    .partner-avatar {
-      font-size: 2.8rem;
-      text-align: center;
-      padding: 8px;
+    .profile-card { display: flex; flex-direction: column; gap: 6px; }
+    
+    .partner-profile-box {
       background: #141414;
       border: 1px solid #262626;
       border-radius: 8px;
-      animation: popIn 0.3s ease-out;
-    }
-    @keyframes popIn {
-      0% { transform: scale(0.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .partner-name {
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: #ffffff;
+      padding: 10px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .partner-avatar { font-size: 2.4rem; }
+    .partner-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #ffffff;
+      margin-bottom: 2px;
     }
     
+    /* แก้ไขไม่ให้ชื่อกับสถานะซ้อนกัน โดยจัดบล็อกแยกชัดเจน */
     .status-badge-partner {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       letter-spacing: 1px;
-      color: #888888;
-      text-align: center;
-      background: #141414;
-      padding: 6px;
+      color: #aaa;
+      background: #1a1a1a;
+      padding: 4px 8px;
       border-radius: 4px;
-      border: 1px solid #222222;
+      border: 1px solid #333;
       word-break: break-all;
     }
-    .status-badge-partner a {
-      color: #1db954;
-      text-decoration: underline;
-    }
+    .status-badge-partner a { color: #1db954; text-decoration: underline; }
 
     .my-animal-box {
       background: #141414;
       border: 1px dashed #333333;
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 6px;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       letter-spacing: 1px;
       color: #aaaaaa;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 4px;
     }
-    .my-animal-name {
-      color: #ffffff;
-      font-weight: bold;
-    }
+    .my-animal-name { color: #ffffff; font-weight: bold; }
 
-    .status-section { margin-top: 4px; }
+    .status-section { margin-top: 2px; }
     .status-label {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       letter-spacing: 1.5px;
       color: #666666;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
       text-transform: uppercase;
     }
-    .status-input, .now-playing-input {
+    
+    /* ปุ่มเลือกความรู้สึกแบบกริด */
+    .mood-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .mood-btn {
+      background: #141414;
+      border: 1px solid #262626;
+      color: #888;
+      padding: 6px 4px;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .mood-btn:hover { border-color: #555; color: #fff; }
+    .mood-btn.active {
+      background: #fff;
+      color: #0b0b0b;
+      font-weight: bold;
+      border-color: #fff;
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
+    .now-playing-input {
       width: 100%;
       background: #141414;
       color: #cccccc;
       border: 1px solid #262626;
-      padding: 8px 10px;
+      padding: 6px 10px;
       border-radius: 4px;
       outline: none;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       letter-spacing: 1px;
-      margin-bottom: 6px;
       transition: border-color 0.2s;
     }
-    .status-input:focus, .now-playing-input:focus { border-color: #555555; color: #ffffff; }
+    .now-playing-input:focus { border-color: #555555; color: #ffffff; }
 
-    .sidebar-footer { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .sidebar-footer { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
     .datetime-display {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       letter-spacing: 1.5px;
       color: #666666;
       text-transform: uppercase;
@@ -262,22 +280,22 @@
     .cigarette-timer-container {
       background: #141414;
       border: 1px solid #222222;
-      padding: 8px 10px;
+      padding: 6px 10px;
       border-radius: 6px;
     }
     .cigarette-label {
       display: flex;
       justify-content: space-between;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       letter-spacing: 1.5px;
       color: #888888;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     
     .speed-warning { color: #ff4444; font-weight: bold; animation: pulse 0.8s infinite alternate; }
 
     .cigarette-bar {
-      height: 8px;
+      height: 6px;
       background: #222222;
       border-radius: 2px;
       position: relative;
@@ -286,9 +304,9 @@
     }
     .cigarette-filter { width: 20%; height: 100%; background: #c28846; }
     .cigarette-body { height: 100%; background: #e0e0e0; transition: width 0.3s ease; }
-    .cigarette-ash { width: 8px; height: 100%; background: #ff4500; box-shadow: 0 0 6px #ff4500; }
+    .cigarette-ash { width: 6px; height: 100%; background: #ff4500; box-shadow: 0 0 6px #ff4500; }
 
-    .chat-area { width: 64%; display: flex; flex-direction: column; background: rgba(17, 17, 17, 0.95); }
+    .chat-area { width: 62%; display: flex; flex-direction: column; background: rgba(17, 17, 17, 0.95); }
     .messages-container {
       flex: 1;
       padding: 15px;
@@ -337,14 +355,14 @@
       font-size: 0.7rem;
       letter-spacing: 1.5px;
       color: #666666;
-      padding: 0 15px 6px;
+      padding: 0 15px 4px;
       height: 16px;
       font-style: italic;
     }
 
     .chat-input-bar {
       display: flex;
-      padding: 12px;
+      padding: 10px;
       background: rgba(13, 13, 13, 0.95);
       border-top: 1px solid #222222;
       gap: 8px;
@@ -357,7 +375,7 @@
       padding: 10px 12px;
       border-radius: 4px;
       outline: none;
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       transition: border-color 0.2s;
     }
     .chat-input:focus { border-color: #555555; }
@@ -441,12 +459,13 @@
         border-right: none;
         border-bottom: 1px solid #222222;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
       }
 
       .profile-card { flex-direction: column; width: 100%; }
-      .partner-avatar { font-size: 2rem; padding: 4px; }
-      .partner-name { font-size: 0.9rem; }
+      .partner-profile-box { padding: 6px; }
+      .partner-avatar { font-size: 1.8rem; }
+      .partner-name { font-size: 0.85rem; }
 
       .chat-area { width: 100%; flex: 1; }
       .messages-container { padding: 10px; gap: 8px; }
@@ -495,25 +514,31 @@
     <div class="chat-layout">
       <div class="sidebar">
         <div class="profile-card">
-          <div class="partner-avatar" id="partner-emoji">🐱</div>
-          <div>
+          <!-- บล็อกข้อมูลคู่สนทนา จัดระเบียบไม่ให้ซ้อนทับกัน -->
+          <div class="partner-profile-box">
+            <div class="partner-avatar" id="partner-emoji">🐱</div>
             <div class="partner-name" id="partner-name">STRANGER</div>
-            <div class="status-badge-partner" id="partner-status-display" style="margin-top:2px;">🟢 Available</div>
-            <div class="status-badge-partner" id="partner-music-display" style="color: #aaa; font-size: 0.7rem; margin-top:2px;">🎵 Vibe: None</div>
+            <div class="status-badge-partner" id="partner-status-display">🌧️ เหงา</div>
+            <div class="status-badge-partner" id="partner-music-display">🎵 Vibe: None</div>
           </div>
           
           <div class="status-section">
-            <div class="status-label">MY STATUS</div>
-            <!-- เปลี่ยนเป็นช่อง input พิมพ์ข้อความสถานะได้อิสระ -->
-            <input type="text" class="status-input" id="my-status" placeholder="🟢 Available" value="🟢 Available" oninput="updateProfileInfo()" maxlength="30">
+            <div class="status-label">MY FEELING (เลือกความรู้สึก)</div>
+            <div class="mood-grid">
+              <button class="mood-btn active" onclick="selectMood('🌧️ เหงา', this)">🌧️ เหงา</button>
+              <button class="mood-btn" onclick="selectMood('💧 เศร้า', this)">💧 เศร้า</button>
+              <button class="mood-btn" onclick="selectMood('☕ เบื่อ', this)">☕ เบื่อ</button>
+              <button class="mood-btn" onclick="selectMood('✨ แฮปปี้', this)">✨ แฮปปี้</button>
+              <button class="mood-btn" onclick="selectMood('🌙 เฉยๆ', this)">🌙 เฉยๆ</button>
+            </div>
 
-            <div class="status-label" style="margin-top: 4px;">NOW PLAYING (URL)</div>
+            <div class="status-label" style="margin-top: 2px;">NOW PLAYING (YOUTUBE / SPOTIFY URL)</div>
             <input type="url" class="now-playing-input" id="my-music" placeholder="https://youtube.com/..." oninput="updateProfileInfo()">
           </div>
         </div>
 
         <div class="sidebar-footer">
-          <!-- ย้าย MY IDENTITY มาไว้เหนือกำหนด CIGARETTE TIMER ตรงนี้ -->
+          <!-- MY IDENTITY อยู่เหนือ CIGARETTE TIMER -->
           <div class="my-animal-box">
             <span>MY IDENTITY:</span>
             <span class="my-animal-name" id="my-animal-display">...</span>
@@ -545,9 +570,9 @@
         <div class="chat-input-bar">
           <input type="text" class="chat-input" id="chat-input" placeholder="Write a message..." oninput="handleTyping()" onkeydown="handleKeyPress(event)">
           <div class="chat-actions">
-            <button class="btn" style="padding: 12px 18px;" onclick="sendChatMessage()">SEND</button>
-            <button class="btn btn-secondary" style="padding: 12px 14px;" onclick="nextPartner()">NEXT</button>
-            <button class="btn btn-secondary" style="padding: 12px 14px; color:#ff4444; border-color:#442222;" onclick="exitChat()">EXIT</button>
+            <button class="btn" style="padding: 10px 16px;" onclick="sendChatMessage()">SEND</button>
+            <button class="btn btn-secondary" style="padding: 10px 12px;" onclick="nextPartner()">NEXT</button>
+            <button class="btn btn-secondary" style="padding: 10px 12px; color:#ff4444; border-color:#442222;" onclick="exitChat()">EXIT</button>
           </div>
         </div>
       </div>
@@ -582,29 +607,53 @@
 
     let myNickName = "";
     let myEmoji = "";
+    let currentMood = "🌧️ เหงา";
 
+    // แปลง URL เพลง และสร้าง Player ฝัง (ถ้าเป็น YouTube) หรือลิงก์กดฟังทันที
     function parseMusicUrl(url) {
       if (!url) return null;
       try {
         const u = new URL(url);
-        let title = u.hostname.replace('www.', '');
-
+        
+        // ตรวจจับ YouTube เพื่อสร้าง Player หรือลิงก์เปิดตรงๆ
         if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
-          const v = u.searchParams.get('v');
-          title = v ? `YouTube Track (${v})` : 'YouTube Song';
-        } else if (u.hostname.includes('spotify.com')) {
-          const path = u.pathname.split('/');
-          title = `Spotify ${path[1] || 'Track'}`;
-        } else if (u.hostname.includes('soundcloud.com')) {
-          title = `SoundCloud Track`;
+          let videoId = '';
+          if (u.hostname.includes('youtu.be')) {
+            videoId = u.pathname.slice(1);
+          } else {
+            videoId = u.searchParams.get('v');
+          }
+          if (videoId) {
+            return `<div style="margin-top:4px;">
+                      <a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#ff4444; font-weight:bold;">▶ ฟังบน YouTube</a>
+                      <div style="font-size:0.65rem; color:#888; margin-top:2px; word-break:break-all;">${url}</div>
+                    </div>`;
+          }
+        } 
+        
+        // ตรวจจับ Spotify
+        if (u.hostname.includes('spotify.com')) {
+          return `<div style="margin-top:4px;">
+                    <a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#1db954; font-weight:bold;">🟢 ฟังบน Spotify</a>
+                    <div style="font-size:0.65rem; color:#888; margin-top:2px; word-break:break-all;">${url}</div>
+                  </div>`;
         }
 
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer">🎵 ${title}</a>`;
+        return `<div style="margin-top:4px;"><a href="${url}" target="_blank" rel="noopener noreferrer">🎵 เปิดลิงก์เพลง</a></div>`;
       } catch (e) {
         return `🎵 ${url}`;
       }
     }
 
+    // ฟังก์ชันเลือกอารมณ์ความรู้สึก
+    function selectMood(mood, btnElement) {
+      currentMood = mood;
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+      btnElement.classList.add('active');
+      updateProfileInfo();
+    }
+
+    // RAIN CANVAS
     const canvas = document.getElementById('rain-canvas');
     const ctx = canvas.getContext('2d');
     let rainActive = true;
@@ -676,7 +725,7 @@
     }
 
     document.addEventListener('click', (e) => {
-      if (e.target.closest('button, select, input, .btn, .bgm-bar, .rain-toggle')) {
+      if (e.target.closest('button, select, input, .btn, .bgm-bar, .rain-toggle, .mood-btn')) {
         playMouseClickSound();
       }
     });
@@ -693,7 +742,6 @@
     const partnerStatusDisplay = document.getElementById('partner-status-display');
     const partnerMusicDisplay = document.getElementById('partner-music-display');
     const myAnimalDisplay = document.getElementById('my-animal-display');
-    const myStatusInput = document.getElementById('my-status');
     const myMusicInput = document.getElementById('my-music');
     const typingIndicator = document.getElementById('typing-indicator');
     
@@ -745,7 +793,14 @@
       } else {
         stopMatchingAnimation();
       }
-      if (view === 'chat') viewChat.classList.add('active');
+      if (view === 'chat') {
+        viewChat.classList.add('active');
+        // เมื่อเข้ามาหน้าแชท ให้หยุดเพลง BGM หลักอัตโนมัติ เพื่อเปิดทางให้ฟังเพลงที่ตัวเองใส่
+        if (!bgm.paused) {
+          bgm.pause();
+          waveIcon.classList.remove('playing');
+        }
+      }
     }
 
     function startMatchingAnimation() {
@@ -781,7 +836,7 @@
     socket.on('seated', (data) => {
       partnerName.innerText = data.partner;
       partnerEmoji.innerText = data.emoji;
-      partnerStatusDisplay.innerText = data.status || '🟢 Available';
+      partnerStatusDisplay.innerText = data.status || '🌧️ เหงา';
       
       const parsedMusic = parseMusicUrl(data.music);
       partnerMusicDisplay.innerHTML = parsedMusic ? parsedMusic : '🎵 Vibe: None';
@@ -815,7 +870,7 @@
     });
 
     socket.on('partner-profile-changed', (profile) => {
-      partnerStatusDisplay.innerText = profile.status || '🟢 Available';
+      partnerStatusDisplay.innerText = profile.status || '🌧️ เหงา';
       const parsedMusic = parseMusicUrl(profile.music);
       partnerMusicDisplay.innerHTML = parsedMusic ? parsedMusic : '🎵 Vibe: None';
     });
@@ -835,7 +890,7 @@
     function cancelMatch() { socket.emit('leave'); showView('landing'); }
 
     function updateProfileInfo() {
-      const status = myStatusInput.value.trim() || '🟢 Available';
+      const status = currentMood;
       const music = myMusicInput.value.trim();
       socket.emit('update-profile', { status, music });
     }
