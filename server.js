@@ -5,20 +5,27 @@ const path = require('path');
 const { Server } = require('socket.io');
 const { check } = require('./filter');
 
+// ⚙️ CONFIGURATION (ปรับแต่งตรงนี้)
+const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1563429603584909332/ycs-aHzueSWta9iR_jjJ96-ypttvbdygIv3--WbfNwxnZ2ou88LSrhSLXI_7j_w-AsfH'; // ใส่ URL Webhook Discord ของคุณ
+const ADMIN_SECRET = 'velvet_secret_123'; // รหัสลับสำหรับกดลิงก์แบน
+const MY_WEBSITE_URL = 'http://localhost:3000'; // เปลี่ยนเป็น Domain จริงเมื่อเอาขึ้น Server (เช่น https://your-app.onrender.com)
+
 const PORT = process.env.PORT || 3000;
-const TABLE_MS = 10 * 60 * 1000;      // เวลาต่อมวน 10 นาที[cite: 2]
+const TABLE_MS = 10 * 60 * 1000;      // 10 นาที
 const IDLE_THRESHOLD_MS = 30 * 1000; // เงียบเกิน 30 วินาที ไหม้เร็วขึ้น 2 เท่า
-const REMATCH_AFTER_MS = 15 * 1000;  // 15 วินาทีถึงยอมให้สุ่มเจอคนเดิม[cite: 2]
+const REMATCH_AFTER_MS = 15 * 1000;  
 const MAX_LEN = 500;
-const MIN_GAP_MS = 400;              // กันส่งข้อความรัวเกินไป[cite: 2]
-const MAX_STRIKES = 3;               // ส่งคำต้องห้ามครบ 3 ครั้ง = พักการใช้งาน[cite: 2]
+const MIN_GAP_MS = 400;              // กันส่งข้อความรัว
+const MAX_STRIKES = 3;               
 const STRIKE_WINDOW_MS = 10 * 60 * 1000;
-const COOLDOWN_MS = 2 * 60 * 1000;
+const COOLDOWN_MS = 2 * 60 * 1000;   
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 const server = http.createServer(app);
 const io = new Server(server);
+
+const bannedIPs = new Map(); // เก็บ IP ที่ถูกแบน { ip -> banUntilTimestamp }
 
 const ANIMALS = [
   ['สุนัข', '🐶'], ['แมว', '🐱'], ['หนู', '🐭'], ['กระต่าย', '🐰'],
@@ -36,17 +43,17 @@ const ANIMALS = [
 ];
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-const users = new Map();  // socket.id -> user[cite: 2]
-const tables = new Map(); // tableId -> table[cite: 2]
+const users = new Map();  
+const tables = new Map(); 
 let queue = [];
 let tableSeq = 0;
 
-function newUser(socket) {
+function newUser(socket, ip) {
   const [animal, emoji] = pick(ANIMALS);
   return {
-    id: socket.id, socket, emoji, nick: animal, // ตัด MOODS ออก เหลือเฉพาะชื่อสัตว์
+    id: socket.id, socket, ip, emoji, nick: animal, 
     status: '🌧️ เหงา', music: '', state: 'idle', tableId: null, since: 0, recent: null, lastMsg: 0, seq: 0,
-    strikes: [], banUntil: 0,
+    strikes: [], banUntil: 0, reportCount: 0
   };
 }
 
@@ -96,7 +103,8 @@ function openTable(a, b) {
     lastInteraction: Date.now(),
     isSpeedUp: false,
     timer: null,
-    extendVotes: new Map()
+    extendVotes: new Map(),
+    logs: [] // เก็บบันทึกข้อความย้อนหลังสำหรับ Report
   };
 
   t.timer = setInterval(() => updateTableTimer(t), 1000);
@@ -151,14 +159,87 @@ function closeTable(t, reason, actorId) {
     if (reason === 'report') r = isActor ? 'report' : 'partner-left';
     if (reason === 'violations') r = 'partner-left';
     u.socket.emit('ended', { reason: r });
-    enqueue(u); // สุ่มจับคู่ใหม่อัตโนมัติ[cite: 2]
+    enqueue(u);
   }
 }
+
+// 📩 ฟังก์ชันส่งรายงานเข้า Discord Webhook
+function sendDiscordReport(reportData) {
+  if (!DISCORD_WEBHOOK_URL) return;
+
+  const targetIp = reportData.target.ip;
+  const banLink1Hr = `${MY_WEBSITE_URL}/admin/ban?ip=${targetIp}&key=${ADMIN_SECRET}&duration=60`;
+  const banLink24Hr = `${MY_WEBSITE_URL}/admin/ban?ip=${targetIp}&key=${ADMIN_SECRET}&duration=1440`;
+
+  const logsText = reportData.logs.length > 0
+    ? reportData.logs.map(m => `**[${m.sender}]**: ${m.text}`).join('\n')
+    : '_ไม่มีข้อความสนทนา_';
+
+  const payload = {
+    username: "VELVET CHAT - SECURITY BOT",
+    embeds: [
+      {
+        title: "🚨 มีรายงานพฤติกรรมไม่เหมาะสม (NEW REPORT)",
+        color: 0xff4444,
+        fields: [
+          { name: "👤 ผู้กดรายงาน", value: `${reportData.reporter.emoji} ${reportData.reporter.nick}`, inline: true },
+          { name: "🚫 ผู้ถูกรายงาน", value: `${reportData.target.emoji} ${reportData.target.nick}\n\`IP: ${targetIp}\``, inline: true },
+          { name: "📌 สาเหตุ", value: `**${reportData.reason}**`, inline: false },
+          { name: "💬 ประวัติการคุยย้อนหลัง (Chat Logs)", value: logsText.slice(0, 1000), inline: false },
+          { name: "⚡ ปุ่มจัดการแอดมิน (Quick Ban)", value: `👉 [🚫 แบน IP นี้ 1 ชั่วโมง](${banLink1Hr})\n👉 [🔨 แบน IP นี้ 24 ชั่วโมง](${banLink24Hr})`, inline: false }
+        ],
+        footer: { text: `Velvet Chat System • ${new Date().toLocaleString('th-TH')}` }
+      }
+    ]
+  };
+
+  fetch(DISCORD_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(err => console.error('Discord Webhook Error:', err));
+}
+
+// 🌐 Route สำหรับสั่งแบน IP ผ่าน Web Browser (Admin Only)
+app.get('/admin/ban', (req, res) => {
+  const { ip, key, duration } = req.query;
+
+  if (key !== ADMIN_SECRET) return res.status(403).send('Unauthorized Key');
+  if (!ip) return res.status(400).send('Missing IP Parameter');
+
+  const banMins = duration ? parseInt(duration) : 60;
+  const banDurationMs = banMins * 60 * 1000;
+  bannedIPs.set(ip, Date.now() + banDurationMs);
+
+  // เตะผู้ใช้ IP นี้ออกจากระบบทันที
+  for (const [id, u] of users.entries()) {
+    if (u.ip === ip) {
+      u.socket.emit('cooldown', { ms: banDurationMs });
+      u.socket.disconnect(true);
+    }
+  }
+
+  res.send(`<h1>✅ สั่งแบนสำเร็จ!</h1><p>IP: <b>${ip}</b> ถูกแบนเรียบร้อยแล้วเป็นเวลา ${banMins} นาที</p>`);
+});
 
 const broadcastOnline = () => io.emit('online', users.size);
 
 io.on('connection', (socket) => {
-  const u = newUser(socket);
+  const clientIP = socket.handshake.headers['x-forwarded-for']?.split(',')[0] || socket.handshake.address;
+
+  // ตรวจสอบการแบน IP
+  if (bannedIPs.has(clientIP)) {
+    const banUntil = bannedIPs.get(clientIP);
+    if (Date.now() < banUntil) {
+      socket.emit('cooldown', { ms: banUntil - Date.now() });
+      socket.disconnect(true);
+      return;
+    } else {
+      bannedIPs.delete(clientIP);
+    }
+  }
+
+  const u = newUser(socket, clientIP);
   users.set(socket.id, u);
   socket.emit('hello', { nick: u.nick, emoji: u.emoji });
   broadcastOnline();
@@ -217,6 +298,11 @@ io.on('connection', (socket) => {
     if (t) {
       t.lastInteraction = now;
       t.isSpeedUp = false;
+
+      // บันทึก Log 10 ข้อความล่าสุด
+      if (!t.logs) t.logs = [];
+      t.logs.push({ sender: `${u.emoji} ${u.nick}`, text: clean });
+      if (t.logs.length > 10) t.logs.shift();
     }
 
     u.lastMsg = now;
@@ -228,6 +314,32 @@ io.on('connection', (socket) => {
   socket.on('typing', (on) => {
     if (u.state !== 'seated') return;
     otherOf(u)?.socket.emit('typing', !!on);
+  });
+
+  // 🚨 รับสัญญาณการกด REPORT
+  socket.on('report', (data) => {
+    if (u.state === 'seated' && tables.has(u.tableId)) {
+      const t = tables.get(u.tableId);
+      const targetUser = users.get(t.a === u.id ? t.b : t.a);
+
+      if (targetUser) {
+        // ส่งรายงานเข้า Discord
+        sendDiscordReport({
+          reporter: { nick: u.nick, emoji: u.emoji, ip: u.ip },
+          target: { nick: targetUser.nick, emoji: targetUser.emoji, ip: targetUser.ip },
+          reason: (data && data.reason) ? data.reason : 'พฤติกรรมไม่เหมาะสม/พิมพ์คำไม่สุภาพ',
+          logs: t.logs || []
+        });
+
+        // สะสมแต้มรายงาน (โดนเกิน 3 คนรายงาน สั่ง Auto-Ban 15 นาที)
+        targetUser.reportCount = (targetUser.reportCount || 0) + 1;
+        if (targetUser.reportCount >= 3) {
+          bannedIPs.set(targetUser.ip, Date.now() + (15 * 60 * 1000));
+        }
+      }
+
+      closeTable(t, 'report', u.id);
+    }
   });
 
   socket.on('vote-extend', (agree) => {
@@ -260,5 +372,4 @@ io.on('connection', (socket) => {
   });
 });
 
-setInterval(tryMatch, 5000);
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
