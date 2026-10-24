@@ -5,10 +5,10 @@ const path = require('path');
 const { Server } = require('socket.io');
 const { check } = require('./filter');
 
-// ⚙️ CONFIGURATION (ปรับแต่งตรงนี้)
-const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1563429603584909332/ycs-aHzueSWta9iR_jjJ96-ypttvbdygIv3--WbfNwxnZ2ou88LSrhSLXI_7j_w-AsfH'; // ใส่ URL Webhook Discord ของคุณ
-const ADMIN_SECRET = 'Silly'; // รหัสลับสำหรับกดลิงก์แบน
-const MY_WEBSITE_URL = 'https://velvet-chat-x04m.onrender.com/'; // เปลี่ยนเป็น Domain จริงเมื่อเอาขึ้น Server (เช่น https://your-app.onrender.com)
+// ⚙️ CONFIGURATION (ใส่ค่าจริงของคุณเรียบร้อยแล้ว)
+const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1563429603584909332/ycs-aHzueSWta9iR_jjJ96-ypttvbdygIv3--WbfNwxnZ2ou88LSrhSLXI_7j_w-AsfH';
+const ADMIN_SECRET = 'velvet_secret_123'; // รหัสลับสำหรับกดลิงก์แบน
+const MY_WEBSITE_URL = 'https://velvet-chat-x04m.onrender.com'; // URL เว็บจริงบน Render
 
 const PORT = process.env.PORT || 3000;
 const TABLE_MS = 10 * 60 * 1000;      // 10 นาที
@@ -104,7 +104,7 @@ function openTable(a, b) {
     isSpeedUp: false,
     timer: null,
     extendVotes: new Map(),
-    logs: [] // เก็บบันทึกข้อความย้อนหลังสำหรับ Report
+    logs: [] 
   };
 
   t.timer = setInterval(() => updateTableTimer(t), 1000);
@@ -165,13 +165,16 @@ function closeTable(t, reason, actorId) {
 
 // 📩 ฟังก์ชันส่งรายงานเข้า Discord Webhook
 function sendDiscordReport(reportData) {
-  if (!DISCORD_WEBHOOK_URL) return;
+  if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.trim() === '') {
+    console.log('⚠️ [Warning] ไม่พบ Discord Webhook URL');
+    return;
+  }
 
-  const targetIp = reportData.target.ip;
+  const targetIp = reportData.target.ip || 'Unknown';
   const banLink1Hr = `${MY_WEBSITE_URL}/admin/ban?ip=${targetIp}&key=${ADMIN_SECRET}&duration=60`;
   const banLink24Hr = `${MY_WEBSITE_URL}/admin/ban?ip=${targetIp}&key=${ADMIN_SECRET}&duration=1440`;
 
-  const logsText = reportData.logs.length > 0
+  const logsText = (reportData.logs && reportData.logs.length > 0)
     ? reportData.logs.map(m => `**[${m.sender}]**: ${m.text}`).join('\n')
     : '_ไม่มีข้อความสนทนา_';
 
@@ -197,7 +200,12 @@ function sendDiscordReport(reportData) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
-  }).catch(err => console.error('Discord Webhook Error:', err));
+  })
+  .then(res => {
+    if (res.ok) console.log('✅ [Discord Webhook] ส่งรายงานสำเร็จ');
+    else console.error('❌ [Discord Webhook Error] Status:', res.status);
+  })
+  .catch(err => console.error('❌ [Discord Webhook Fetch Error]:', err));
 }
 
 // 🌐 Route สำหรับสั่งแบน IP ผ่าน Web Browser (Admin Only)
@@ -225,6 +233,7 @@ app.get('/admin/ban', (req, res) => {
 const broadcastOnline = () => io.emit('online', users.size);
 
 io.on('connection', (socket) => {
+  // ดึง IP จริง (รองรับ Reverse Proxy ของ Render)
   const clientIP = socket.handshake.headers['x-forwarded-for']?.split(',')[0] || socket.handshake.address;
 
   // ตรวจสอบการแบน IP
@@ -299,7 +308,6 @@ io.on('connection', (socket) => {
       t.lastInteraction = now;
       t.isSpeedUp = false;
 
-      // บันทึก Log 10 ข้อความล่าสุด
       if (!t.logs) t.logs = [];
       t.logs.push({ sender: `${u.emoji} ${u.nick}`, text: clean });
       if (t.logs.length > 10) t.logs.shift();
@@ -323,7 +331,6 @@ io.on('connection', (socket) => {
       const targetUser = users.get(t.a === u.id ? t.b : t.a);
 
       if (targetUser) {
-        // ส่งรายงานเข้า Discord
         sendDiscordReport({
           reporter: { nick: u.nick, emoji: u.emoji, ip: u.ip },
           target: { nick: targetUser.nick, emoji: targetUser.emoji, ip: targetUser.ip },
@@ -331,7 +338,6 @@ io.on('connection', (socket) => {
           logs: t.logs || []
         });
 
-        // สะสมแต้มรายงาน (โดนเกิน 3 คนรายงาน สั่ง Auto-Ban 15 นาที)
         targetUser.reportCount = (targetUser.reportCount || 0) + 1;
         if (targetUser.reportCount >= 3) {
           bannedIPs.set(targetUser.ip, Date.now() + (15 * 60 * 1000));
