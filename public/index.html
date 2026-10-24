@@ -379,6 +379,9 @@
     .chat-input:focus { border-color: #555555; }
     .chat-actions { display: flex; gap: 6px; }
 
+    /* ==========================================
+       MODAL & WARNING POPUP STYLES
+       ========================================== */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
@@ -395,6 +398,17 @@
     .modal-title { font-size: 1.1rem; letter-spacing: 3px; color: #ffffff; margin-bottom: 10px; }
     .modal-desc { font-size: 0.8rem; color: #888888; margin-bottom: 20px; line-height: 1.5; }
     .modal-buttons { display: flex; gap: 10px; justify-content: center; }
+
+    /* Warning Popup Specifics */
+    .warning-modal-box {
+      background: #160c0c;
+      border: 1px solid #ff4444;
+      box-shadow: 0 0 25px rgba(255, 68, 68, 0.3);
+    }
+    .warning-modal-box .modal-title {
+      color: #ff4444;
+      text-shadow: 0 0 8px rgba(255, 68, 68, 0.5);
+    }
 
     .bottom-controls {
       position: fixed;
@@ -575,6 +589,7 @@
     </div>
   </div>
 
+  <!-- EXPIRED MODAL -->
   <div class="modal-overlay" id="expired-modal">
     <div class="modal-box">
       <div class="modal-title">CIGARETTE IS OUT</div>
@@ -582,6 +597,17 @@
       <div class="modal-buttons">
         <button class="btn btn-secondary" onclick="voteExtend(false)">ไม่ (หาคนใหม่)</button>
         <button class="btn" onclick="voteExtend(true)">ใช่ (คุยต่อ)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WARNING POPUP MODAL (คำหยาบ / พิมพ์รัว) -->
+  <div class="modal-overlay" id="warning-modal">
+    <div class="modal-box warning-modal-box">
+      <div class="modal-title" id="warning-title">⚠️ SYSTEM WARNING</div>
+      <div class="modal-desc" id="warning-desc">กรุณาใช้ถ้อยคำที่สุภาพ</div>
+      <div class="modal-buttons">
+        <button class="btn" style="background:#ff4444; color:#fff; border-color:#ff4444;" onclick="closeWarningPopup()">ตกลง</button>
       </div>
     </div>
   </div>
@@ -605,7 +631,6 @@
     let myEmoji = "";
     let currentMood = "🌧️ เหงา";
 
-    // ฟังก์ชันแปลง URL เพลงให้เล่นเฉพาะแถบเสียงขนาดเล็ก (Height 60px)
     function parseMusicUrl(url) {
       if (!url) return null;
       try {
@@ -646,6 +671,7 @@
       updateProfileInfo();
     }
 
+    // Rain Canvas Setup
     const canvas = document.getElementById('rain-canvas');
     const ctx = canvas.getContext('2d');
     let rainActive = true;
@@ -741,6 +767,12 @@
     const cigaretteBody = document.getElementById('cigarette-body');
     const datetimeText = document.getElementById('datetime-text');
     const expiredModal = document.getElementById('expired-modal');
+    
+    // Popup Modal
+    const warningModal = document.getElementById('warning-modal');
+    const warningTitle = document.getElementById('warning-title');
+    const warningDesc = document.getElementById('warning-desc');
+
     const bgm = document.getElementById('bgm');
     const waveIcon = document.getElementById('wave-icon');
     const matchingSubtext = document.getElementById('matching-subtext');
@@ -815,6 +847,16 @@
     setInterval(updateClock, 1000);
     updateClock();
 
+    function showWarningPopup(title, text) {
+      warningTitle.innerText = title;
+      warningDesc.innerText = text;
+      warningModal.classList.add('active');
+    }
+
+    function closeWarningPopup() {
+      warningModal.classList.remove('active');
+    }
+
     socket.on('hello', (data) => {
       myNickName = data.nick;
       myEmoji = data.emoji;
@@ -834,6 +876,7 @@
 
       chatMessages.innerHTML = `<div class="message-bubble system">CONNECTED WITH ${data.emoji} ${data.partner}</div>`;
       expiredModal.classList.remove('active');
+      warningModal.classList.remove('active');
       showView('chat');
       updateProfileInfo();
     });
@@ -869,6 +912,11 @@
     socket.on('msg', (data) => { appendMessage('partner', data.text); });
     socket.on('typing', (on) => { typingIndicator.innerText = on ? `${partnerName.innerText} is typing...` : ''; });
 
+    socket.on('cooldown', (data) => {
+      const secs = Math.ceil(data.ms / 1000);
+      showWarningPopup('⚠️ RESTRICTED', `คุณถูกพักการใช้งานชั่วคราวเป็นเวลา ${secs} วินาที เนื่องจากละเมิดกฎกฎระเบียบการใช้ข้อความ`);
+    });
+
     socket.on('ended', (data) => {
       expiredModal.classList.remove('active');
       if (data.reason === 'time-up-new-match' || data.reason === 'partner-left') {
@@ -891,7 +939,11 @@
       if (text) {
         socket.emit('msg', text, (res) => {
           if (res && res.err) {
-            if (res.err === 'filtered') alert(`ตรวจพบคำต้องห้าม! (${res.strikes}/${res.max})`);
+            if (res.err === 'filtered') {
+              showWarningPopup('⚠️ คำต้องห้าม!', `พบการใช้คำไม่สุภาพ/คำต้องห้าม! (คำเตือนที่ ${res.strikes}/${res.max} หากครบจะถูกเตะออกทันที)`);
+            } else if (res.err === 'rate') {
+              showWarningPopup('⚠️ ส่งข้อความเร็วเกินไป', 'กรุณารอแปปนึงก่อนส่งข้อความถัดไปครับ (Flood Protection)');
+            }
             return;
           }
           appendMessage('me', text);
