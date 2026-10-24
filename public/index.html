@@ -2,947 +2,456 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>VELVET CHAT - AM EDITION</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Velvet Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="/socket.io/socket.io.js"></script>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      cursor: url('https://cur.cursors-4u.net/user/use-1/use153.cur'), default !important;
+      font-family: 'Kanit', sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
 
-    button, select, input, .btn, .bgm-bar, a, .rain-toggle, .mood-btn {
-      cursor: url('https://cur.cursors-4u.net/user/use-1/use154.cur'), pointer !important;
-    }
-
     body {
-      background-color: #0b0b0b;
-      color: #e5e5e5;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      min-height: 100dvh;
-      overflow: hidden;
-      position: relative;
-    }
-
-    #rain-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
+      background-color: #0d0d0d;
+      color: #e0e0e0;
       height: 100vh;
-      pointer-events: none;
-      z-index: 5;
+      height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
     }
 
-    .view-section {
-      display: none;
+    /* Outer Wrapper */
+    .app-container {
       width: 100%;
       max-width: 900px;
-      padding: 0 15px;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      animation: fadeIn 0.4s ease-in-out;
-      z-index: 10;
-    }
-    .view-section.active { display: flex; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      background: #141414;
+      border-radius: 0;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      position: relative;
     }
 
-    .header-container { text-align: center; margin-bottom: 20px; }
-    .am-title {
-      font-size: 2.2rem;
-      font-weight: 900;
-      letter-spacing: 8px;
-      color: #ffffff;
-      text-transform: uppercase;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-      animation: neonFlicker 3s infinite alternate;
-    }
-
-    @keyframes neonFlicker {
-      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 0 20px rgba(255, 255, 255, 0.2);
+    @media (min-width: 769px) {
+      .app-container {
+        height: 90vh;
+        border-radius: 16px;
+        border: 1px solid #282828;
       }
-      20%, 24%, 55% { text-shadow: none; }
     }
 
-    .am-wave-svg { width: 320px; max-width: 90vw; height: 50px; margin: 10px 0; }
-    .online-badge {
-      font-size: 0.85rem;
-      letter-spacing: 3px;
-      color: #888888;
-      text-transform: uppercase;
-    }
-
-    .btn {
-      background: #ffffff;
-      color: #0b0b0b;
-      border: 1px solid #ffffff;
-      padding: 14px 32px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      transition: all 0.2s ease;
-      border-radius: 4px;
-      position: relative;
-      overflow: hidden;
-    }
-    .btn:hover {
-      background: #0b0b0b;
-      color: #ffffff;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-      transform: translateY(-2px);
-    }
-    .btn:active { transform: scale(0.95) translateY(0); }
-
-    .btn-secondary {
-      background: transparent;
-      color: #888888;
-      border: 1px solid #333333;
-    }
-    .btn-secondary:hover {
-      background: #1e1e1e;
-      color: #ffffff;
-      border-color: #666666;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-    }
-
-    #view-landing { gap: 30px; }
-    #view-matching { text-align: center; gap: 20px; }
-    
-    .matching-status {
-      font-size: 1.1rem;
-      letter-spacing: 4px;
-      color: #ffffff;
-      text-transform: uppercase;
-      margin-top: 10px;
-      text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-      animation: pulse 1.2s infinite alternate;
-    }
-    
-    .matching-subtext {
-      font-size: 0.8rem;
-      letter-spacing: 2px;
-      color: #666666;
-      text-transform: uppercase;
-      min-height: 20px;
-    }
-
-    .animated-wave path {
-      stroke-dasharray: 600;
-      stroke-dashoffset: 600;
-      animation: waveDash 1.5s linear infinite;
-    }
-    @keyframes waveDash { to { stroke-dashoffset: 0; } }
-    @keyframes pulse { 0% { opacity: 0.3; } 100% { opacity: 1; } }
-
-    .chat-layout {
-      display: flex;
-      width: 100%;
-      height: 82vh;
-      height: 82dvh;
-      background: rgba(17, 17, 17, 0.92);
-      backdrop-filter: blur(8px);
-      border: 1px solid #222222;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9);
-    }
-
+    /* Sidebar ฝั่งซ้าย */
     .sidebar {
-      width: 38%;
-      background: rgba(13, 13, 13, 0.95);
-      border-right: 1px solid #222222;
-      padding: 14px;
+      width: 260px;
+      background: #1a1a1a;
+      border-right: 1px solid #262626;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      overflow-y: auto;
+      padding: 20px;
+      z-index: 20;
+      transition: transform 0.3s ease;
     }
-    .profile-card { display: flex; flex-direction: column; gap: 6px; }
-    
-    .partner-profile-box {
-      background: #141414;
-      border: 1px solid #262626;
-      border-radius: 8px;
-      padding: 10px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .partner-avatar { font-size: 2.4rem; }
-    .partner-name {
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      color: #ffffff;
-      margin-bottom: 2px;
-    }
-    
-    .status-badge-partner {
-      font-size: 0.72rem;
-      letter-spacing: 1px;
-      color: #aaa;
-      background: #1a1a1a;
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: 1px solid #333;
-      word-break: break-all;
-    }
-    .status-badge-partner a { color: #1db954; text-decoration: underline; }
 
-    .my-animal-box {
-      background: #141414;
-      border: 1px dashed #333333;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 0.72rem;
-      letter-spacing: 1px;
-      color: #aaaaaa;
+    .brand {
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: #fff;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 8px;
     }
-    .my-animal-name { color: #ffffff; font-weight: bold; }
 
-    .status-section { margin-top: 2px; }
-    .status-label {
-      font-size: 0.65rem;
-      letter-spacing: 1.5px;
-      color: #666666;
-      margin-bottom: 3px;
-      text-transform: uppercase;
-    }
-    
-    .mood-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-      margin-bottom: 6px;
-    }
-    .mood-btn {
-      background: #141414;
-      border: 1px solid #262626;
+    .online-count {
+      font-size: 0.8rem;
       color: #888;
-      padding: 6px 4px;
-      font-size: 0.7rem;
-      border-radius: 4px;
-      text-align: center;
-      transition: all 0.2s;
-    }
-    .mood-btn:hover { border-color: #555; color: #fff; }
-    .mood-btn.active {
-      background: #fff;
-      color: #0b0b0b;
-      font-weight: bold;
-      border-color: #fff;
-      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+      margin-bottom: 20px;
     }
 
-    .now-playing-input {
+    .profile-box {
+      background: #222;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .profile-box input {
       width: 100%;
-      background: #141414;
-      color: #cccccc;
-      border: 1px solid #262626;
-      padding: 6px 10px;
-      border-radius: 4px;
-      outline: none;
-      font-size: 0.78rem;
-      letter-spacing: 1px;
-      transition: border-color 0.2s;
-    }
-    .now-playing-input:focus { border-color: #555555; color: #ffffff; }
-
-    .sidebar-footer { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
-    .sidebar-danger-btns { display: flex; gap: 6px; }
-    
-    .datetime-display {
-      font-size: 0.68rem;
-      letter-spacing: 1.5px;
-      color: #666666;
-      text-transform: uppercase;
-      text-align: center;
-    }
-    .cigarette-timer-container {
-      background: #141414;
-      border: 1px solid #222222;
-      padding: 6px 10px;
+      background: #181818;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 8px;
       border-radius: 6px;
+      font-size: 0.85rem;
+      margin-top: 6px;
     }
-    .cigarette-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.68rem;
-      letter-spacing: 1.5px;
-      color: #888888;
-      margin-bottom: 4px;
-    }
-    
-    .speed-warning { color: #ff4444; font-weight: bold; animation: pulse 0.8s infinite alternate; }
 
-    .cigarette-bar {
-      height: 6px;
-      background: #222222;
-      border-radius: 2px;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-    }
-    .cigarette-filter { width: 20%; height: 100%; background: #c28846; }
-    .cigarette-body { height: 100%; background: #e0e0e0; transition: width 0.3s ease; }
-    .cigarette-ash { width: 6px; height: 100%; background: #ff4500; box-shadow: 0 0 6px #ff4500; }
-
-    .chat-area { width: 62%; display: flex; flex-direction: column; background: rgba(17, 17, 17, 0.95); }
-    .messages-container {
-      flex: 1;
-      padding: 15px;
-      overflow-y: auto;
+    .sidebar-btns {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-    .message-bubble {
-      max-width: 85%;
-      padding: 10px 14px;
-      font-size: 0.88rem;
-      line-height: 1.4;
-      word-wrap: break-word;
-      animation: msgFadeIn 0.25s ease-out;
-    }
-    @keyframes msgFadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .message-bubble.me {
-      align-self: flex-end;
-      background: #ffffff;
-      color: #0b0b0b;
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
       font-weight: 500;
-      border-radius: 12px 12px 2px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
-    .message-bubble.partner {
+
+    .btn-report { background: #3a1515; color: #ff6b6b; border: 1px solid #5a2222; }
+    .btn-report:hover { background: #5a2222; }
+    .btn-exit { background: #262626; color: #ccc; }
+    .btn-exit:hover { background: #333; }
+    .btn-start { background: #fff; color: #000; font-weight: 600; padding: 12px; }
+
+    /* Main Chat Area */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+      background: #111;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .chat-header {
+      height: 55px;
+      padding: 0 16px;
+      background: #161616;
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .partner-info {
+      font-size: 0.9rem;
+      color: #aaa;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    /* กล่องแสดงข้อความ (Scrollable Container) */
+    .messages-container {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      -webkit-overflow-scrolling: touch; /* เลื่อนลื่นบน iOS */
+    }
+
+    .msg-bubble {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      word-break: break-word;
+      animation: fadeIn 0.15s ease-in-out;
+    }
+
+    .msg-self {
+      align-self: flex-end;
+      background: #e0e0e0;
+      color: #111;
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg-partner {
       align-self: flex-start;
-      background: #1a1a1a;
-      color: #e5e5e5;
-      border: 1px solid #262626;
-      border-radius: 12px 12px 12px 2px;
+      background: #222;
+      color: #eee;
+      border-bottom-left-radius: 2px;
+      border: 1px solid #2a2a2a;
     }
-    .message-bubble.system {
+
+    .system-msg {
       align-self: center;
-      background: transparent;
-      color: #555555;
-      font-size: 0.7rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      font-size: 0.8rem;
+      color: #666;
+      margin: 6px 0;
       text-align: center;
     }
 
-    .typing-indicator {
-      font-size: 0.7rem;
-      letter-spacing: 1.5px;
-      color: #666666;
-      padding: 0 15px 4px;
-      height: 16px;
-      font-style: italic;
-    }
-
-    .chat-input-bar {
+    /* ช่องพิมพ์ข้อความด้านล่าง (Locked at Bottom) */
+    .chat-input-area {
+      padding: 12px 16px;
+      background: #161616;
+      border-top: 1px solid #222;
       display: flex;
-      padding: 10px;
-      background: rgba(13, 13, 13, 0.95);
-      border-top: 1px solid #222222;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
+      flex-shrink: 0; /* ป้องกันไม่ให้โดนบีบหาย */
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
     }
-    .chat-input {
+
+    .chat-input-area input {
       flex: 1;
-      min-width: 0;
-      background: #141414;
-      border: 1px solid #262626;
-      color: #ffffff;
-      padding: 10px 12px;
-      border-radius: 4px;
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      padding: 12px 16px;
+      border-radius: 24px;
+      color: #fff;
+      font-size: 0.95rem;
       outline: none;
-      font-size: 0.85rem;
-      transition: border-color 0.2s;
-    }
-    .chat-input:focus { border-color: #555555; }
-    .chat-actions { display: flex; gap: 6px; flex-shrink: 0; }
-
-    /* MODAL & WARNING STYLES */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
-      display: none; align-items: center; justify-content: center; z-index: 999;
-      animation: fadeIn 0.2s ease-in-out;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal-box {
-      background: #111111; border: 1px solid #333333; padding: 25px;
-      border-radius: 8px; text-align: center; max-width: 380px; width: 90%;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
-      animation: popIn 0.3s ease-out;
-    }
-    .modal-title { font-size: 1.1rem; letter-spacing: 3px; color: #ffffff; margin-bottom: 10px; }
-    .modal-desc { font-size: 0.8rem; color: #888888; margin-bottom: 20px; line-height: 1.5; }
-    .modal-buttons { display: flex; gap: 10px; justify-content: center; }
-
-    .warning-modal-box {
-      background: #160c0c;
-      border: 1px solid #ff4444;
-      box-shadow: 0 0 25px rgba(255, 68, 68, 0.3);
-    }
-    .warning-modal-box .modal-title { color: #ff4444; text-shadow: 0 0 8px rgba(255, 68, 68, 0.5); }
-
-    .bottom-controls {
-      position: fixed; bottom: 12px; left: 15px; right: 15px;
-      display: flex; justify-content: space-between; align-items: center;
-      z-index: 100; font-size: 0.7rem; letter-spacing: 1.5px; color: #888888;
     }
 
-    .bgm-bar, .rain-toggle {
-      background: rgba(18, 18, 18, 0.9); border: 1px solid #262626;
-      padding: 6px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px;
-      transition: all 0.2s;
+    .chat-input-area input:focus {
+      border-color: #444;
     }
-    .bgm-bar:hover, .rain-toggle:hover { color: #ffffff; border-color: #555555; }
 
-    .sound-wave-icon { display: inline-flex; align-items: flex-end; gap: 3px; height: 12px; }
-    .sound-wave-icon span { width: 2px; height: 100%; background-color: #ffffff; border-radius: 1px; }
-    .sound-wave-icon.playing span:nth-child(1) { animation: soundWave 0.8s infinite ease-in-out alternate; }
-    .sound-wave-icon.playing span:nth-child(2) { animation: soundWave 1.2s infinite ease-in-out alternate 0.2s; }
-    .sound-wave-icon.playing span:nth-child(3) { animation: soundWave 0.6s infinite ease-in-out alternate 0.4s; }
-    .sound-wave-icon.playing span:nth-child(4) { animation: soundWave 1.0s infinite ease-in-out alternate 0.1s; }
+    .chat-input-area button {
+      background: #fff;
+      color: #000;
+      border: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
 
-    @keyframes soundWave { 0% { height: 20%; } 100% { height: 100%; } }
-    .sound-wave-icon:not(.playing) span { height: 20% !important; animation: none !important; }
-
+    /* 📱 RESPONSIVE สำหรับโทรศัพท์มือถือ */
     @media (max-width: 768px) {
-      .am-title { font-size: 1.6rem; letter-spacing: 5px; }
-      .am-wave-svg { height: 35px; }
-      .chat-layout { flex-direction: column; height: 82vh; height: 82dvh; }
-      .sidebar { width: 100%; padding: 10px; border-right: none; border-bottom: 1px solid #222222; flex-direction: column; gap: 6px; }
-      .profile-card { flex-direction: column; width: 100%; }
-      .partner-profile-box { padding: 6px; }
-      .partner-avatar { font-size: 1.8rem; }
-      .partner-name { font-size: 0.85rem; }
-      .chat-area { width: 100%; flex: 1; }
-      .messages-container { padding: 10px; gap: 8px; }
-      .chat-input-bar { padding: 8px; gap: 6px; }
-      .chat-input { padding: 8px 10px; font-size: 0.85rem; }
-      .chat-actions .btn { padding: 8px 10px !important; font-size: 0.7rem; letter-spacing: 1px; }
-      .bottom-controls { bottom: 8px; left: 10px; right: 10px; font-size: 0.65rem; }
-      .bgm-bar, .rain-toggle { padding: 4px 8px; }
+      .mobile-menu-btn {
+        display: block;
+      }
+
+      .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 250px;
+        transform: translateX(-100%);
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .chat-area {
+        width: 100%;
+      }
+
+      .msg-bubble {
+        max-width: 85%; /* ขยายกล่องความกว้างข้อความบนมือถือ */
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
 
-  <canvas id="rain-canvas"></canvas>
-  <audio id="bgm" loop src="/music/bgm.mp3"></audio>
+  <div class="app-container">
+    <!-- Sidebar ฝั่งซ้าย -->
+    <div class="sidebar" id="sidebar">
+      <div>
+        <div class="brand">✨ VELVET CHAT</div>
+        <div class="online-count" id="online-count">🟢 ออนไลน์: 1 คน</div>
 
-  <!-- LANDING VIEW -->
-  <div id="view-landing" class="view-section active">
-    <div class="header-container">
-      <h1 class="am-title">VELVET CHAT</h1>
-      <svg class="am-wave-svg" viewBox="0 0 320 50">
-        <path d="M 0 25 Q 40 25 80 5 Q 120 45 160 5 Q 200 45 240 5 Q 280 25 320 25" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.9"/>
-      </svg>
-      <div class="online-badge">ONLINE: <span id="landing-online-count" style="color:#fff;">1</span></div>
-    </div>
-    <button class="btn" onclick="requestMatch()">MATCH</button>
-  </div>
-
-  <!-- MATCHING VIEW -->
-  <div id="view-matching" class="view-section">
-    <div class="header-container">
-      <h1 class="am-title">SEARCHING</h1>
-      <svg class="am-wave-svg animated-wave" viewBox="0 0 320 50">
-        <path d="M 0 25 Q 40 5 80 45 Q 120 5 160 45 Q 200 5 240 45 Q 280 25 320 25" fill="none" stroke="#ffffff" stroke-width="2"/>
-      </svg>
-      <div class="matching-status">FINDING A STRANGER...</div>
-      <div class="matching-subtext" id="matching-subtext">TUNING FREQUENCY...</div>
-    </div>
-    <button class="btn btn-secondary" onclick="cancelMatch()">CANCEL</button>
-  </div>
-
-  <!-- CHAT VIEW -->
-  <div id="view-chat" class="view-section">
-    <div class="chat-layout">
-      <div class="sidebar">
-        <div class="profile-card">
-          <div class="partner-profile-box">
-            <div class="partner-avatar" id="partner-emoji">🐱</div>
-            <div class="partner-name" id="partner-name">STRANGER</div>
-            <div class="status-badge-partner" id="partner-status-display">🌧️ เหงา</div>
-            <div class="status-badge-partner" id="partner-music-display">🎵 Vibe: None</div>
-          </div>
-          
-          <div class="status-section">
-            <div class="status-label">MY FEELING (เลือกความรู้สึก)</div>
-            <div class="mood-grid">
-              <button class="mood-btn active" onclick="selectMood('🌧️ เหงา', this)">🌧️ เหงา</button>
-              <button class="mood-btn" onclick="selectMood('💧 เศร้า', this)">💧 เศร้า</button>
-              <button class="mood-btn" onclick="selectMood('☕ เบื่อ', this)">☕ เบื่อ</button>
-              <button class="mood-btn" onclick="selectMood('✨ แฮปปี้', this)">✨ แฮปปี้</button>
-              <button class="mood-btn" onclick="selectMood('🌙 เฉยๆ', this)">🌙 เฉยๆ</button>
-            </div>
-
-            <div class="status-label" style="margin-top: 2px;">NOW PLAYING (YOUTUBE / SPOTIFY URL)</div>
-            <input type="url" class="now-playing-input" id="my-music" placeholder="https://youtube.com/..." oninput="updateProfileInfo()">
-          </div>
-        </div>
-
-        <div class="sidebar-footer">
-          <div class="my-animal-box">
-            <span>MY IDENTITY:</span>
-            <span class="my-animal-name" id="my-animal-display">...</span>
-          </div>
-
-          <div class="cigarette-timer-container">
-            <div class="cigarette-label">
-              <span>CIGARETTE TIMER</span>
-              <span id="timer-text">10:00</span>
-            </div>
-            <div class="cigarette-bar">
-              <div class="cigarette-filter"></div>
-              <div class="cigarette-body" id="cigarette-body" style="width: 80%;"></div>
-              <div class="cigarette-ash"></div>
-            </div>
-          </div>
-
-          <div class="sidebar-danger-btns">
-            <button class="btn btn-secondary" style="flex:1; padding:6px; font-size:0.7rem; color:#ffaa00; border-color:#554422;" onclick="reportPartner()">🚨 REPORT</button>
-            <button class="btn btn-secondary" style="flex:1; padding:6px; font-size:0.7rem; color:#ff4444; border-color:#442222;" onclick="exitChat()">EXIT</button>
-          </div>
-
-          <div class="datetime-display" id="datetime-text">MON 00:00 AM</div>
+        <div class="profile-box">
+          <div style="font-size:0.85rem; color:#aaa; margin-bottom:4px;">สถานะของคุณ</div>
+          <input type="text" id="status-input" value="🌧️ เหงา" maxlength="30" placeholder="ระบุสถานะ...">
         </div>
       </div>
 
-      <div class="chat-area">
-        <div class="messages-container" id="chat-messages">
-          <div class="message-bubble system">CONNECTED TO STRANGER</div>
-        </div>
-
-        <div class="typing-indicator" id="typing-indicator"></div>
-
-        <div class="chat-input-bar">
-          <input type="text" class="chat-input" id="chat-input" placeholder="Write a message..." oninput="handleTyping()" onkeydown="handleKeyPress(event)">
-          <div class="chat-actions">
-            <button class="btn" style="padding: 10px 18px;" onclick="sendChatMessage()">SEND</button>
-            <button class="btn btn-secondary" style="padding: 10px 14px;" onclick="nextPartner()">NEXT</button>
-          </div>
-        </div>
+      <div class="sidebar-btns">
+        <button class="btn btn-start" id="start-btn" onclick="startSearch()">🔍 เริ่มสุ่มคุย</button>
+        <button class="btn btn-report" id="report-btn" onclick="reportPartner()" style="display:none;">🚨 รายงาน (REPORT)</button>
+        <button class="btn btn-exit" id="exit-btn" onclick="leaveChat()" style="display:none;">🚪 ออกจากแชท</button>
       </div>
     </div>
-  </div>
 
-  <!-- EXPIRED MODAL -->
-  <div class="modal-overlay" id="expired-modal">
-    <div class="modal-box">
-      <div class="modal-title">CIGARETTE IS OUT</div>
-      <div class="modal-desc">คุณคิดว่าจะพอแล้วรึยัง? ต้องการต่อเพิ่มอีกมวนก่อนมั้ย?</div>
-      <div class="modal-buttons">
-        <button class="btn btn-secondary" onclick="voteExtend(false)">ไม่ (หาคนใหม่)</button>
-        <button class="btn" onclick="voteExtend(true)">ใช่ (คุยต่อ)</button>
+    <!-- Main Chat Container -->
+    <div class="chat-area">
+      <!-- Header -->
+      <div class="chat-header">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="partner-info" id="partner-info">ไม่ได้เชื่อมต่อ</div>
+        <div id="timer" style="font-size:0.85rem; color:#888;"></div>
       </div>
-    </div>
-  </div>
 
-  <!-- WARNING POPUP MODAL -->
-  <div class="modal-overlay" id="warning-modal">
-    <div class="modal-box warning-modal-box">
-      <div class="modal-title" id="warning-title">⚠️ SYSTEM WARNING</div>
-      <div class="modal-desc" id="warning-desc">กรุณาใช้ถ้อยคำที่สุภาพ</div>
-      <div class="modal-buttons">
-        <button class="btn" style="background:#ff4444; color:#fff; border-color:#ff4444;" onclick="closeWarningPopup()">ตกลง</button>
+      <!-- Messages Box (Scrollable) -->
+      <div class="messages-container" id="messages">
+        <div class="system-msg">ยินดีต้อนรับสู่ Velvet Chat กด "เริ่มสุ่มคุย" เพื่อจับคู่</div>
       </div>
-    </div>
-  </div>
 
-  <div class="bottom-controls">
-    <div class="bgm-bar" onclick="toggleBGM()">
-      <div class="sound-wave-icon" id="wave-icon">
-        <span></span><span></span><span></span><span></span>
+      <!-- Input Bar (Fixed Bottom) -->
+      <div class="chat-input-area">
+        <input type="text" id="msg-input" placeholder="พิมพ์ข้อความ..." disabled onkeypress="handleKeyPress(event)">
+        <button id="send-btn" onclick="sendMessage()" disabled>➔</button>
       </div>
-      AM ATMOSPHERE
-    </div>
-    <div class="rain-toggle" onclick="toggleRain()">
-      🌧️ RAIN: <span id="rain-status" style="color: #fff;">ON</span>
     </div>
   </div>
 
   <script>
     const socket = io();
+    let isSeated = false;
 
-    let myNickName = "";
-    let myEmoji = "";
-    let currentMood = "🌧️ เหงา";
+    // Elements
+    const messagesBox = document.getElementById('messages');
+    const msgInput = document.getElementById('msg-input');
+    const sendBtn = document.getElementById('send-btn');
+    const partnerInfo = document.getElementById('partner-info');
+    const startBtn = document.getElementById('start-btn');
+    const reportBtn = document.getElementById('report-btn');
+    const exitBtn = document.getElementById('exit-btn');
+    const sidebar = document.getElementById('sidebar');
 
-    function parseMusicUrl(url) {
-      if (!url) return null;
-      try {
-        const u = new URL(url);
-        let videoId = '';
-
-        if (u.hostname.includes('youtube.com')) {
-          videoId = u.searchParams.get('v');
-        } else if (u.hostname.includes('youtu.be')) {
-          videoId = u.pathname.slice(1);
-        }
-
-        if (videoId) {
-          return `<div style="margin-top:4px; text-align:center;">
-                    <div style="font-size:0.65rem; color:#1db954; margin-bottom:2px; font-weight:bold;">🎵 Audio Player</div>
-                    <iframe width="100%" height="60" 
-                      src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1" 
-                      frameborder="0" 
-                      allow="autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                      style="border-radius:6px; border:1px solid #333; background:#000;"></iframe>
-                  </div>`;
-        }
-
-        if (u.hostname.includes('spotify.com')) {
-          return `<div style="margin-top:4px;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#1db954; font-weight:bold;">🟢 ฟังบน Spotify</a></div>`;
-        }
-
-        return `<div style="margin-top:4px;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#fff;">🎵 เปิดลิงก์เพลง</a></div>`;
-      } catch (e) {
-        return null;
-      }
+    function toggleSidebar() {
+      sidebar.classList.toggle('open');
     }
 
-    function selectMood(mood, btnElement) {
-      currentMood = mood;
-      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
-      btnElement.classList.add('active');
-      updateProfileInfo();
+    function scrollToBottom() {
+      messagesBox.scrollTop = messagesBox.scrollHeight;
     }
 
-    // Canvas Rain
-    const canvas = document.getElementById('rain-canvas');
-    const ctx = canvas.getContext('2d');
-    let rainActive = true;
-    let raindrops = [];
-    const maxDrops = 140;
-
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    for (let i = 0; i < maxDrops; i++) {
-      raindrops.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        length: Math.random() * 25 + 10,
-        speed: Math.random() * 9 + 6,
-        opacity: Math.random() * 0.5 + 0.2
-      });
+    function addSystemMsg(text) {
+      const div = document.createElement('div');
+      div.className = 'system-msg';
+      div.innerText = text;
+      messagesBox.appendChild(div);
+      scrollToBottom();
     }
 
-    function animateRain() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (rainActive) {
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = 'rgba(210, 230, 255, 0.65)';
-        for (let drop of raindrops) {
-          ctx.globalAlpha = drop.opacity;
-          ctx.beginPath();
-          ctx.moveTo(drop.x, drop.y);
-          ctx.lineTo(drop.x - 1, drop.y + drop.length);
-          ctx.stroke();
-
-          drop.y += drop.speed;
-          drop.x -= 0.6;
-
-          if (drop.y > canvas.height) {
-            drop.y = -30;
-            drop.x = Math.random() * canvas.width;
-          }
-        }
-      }
-      requestAnimationFrame(animateRain);
-    }
-    animateRain();
-
-    function toggleRain() {
-      rainActive = !rainActive;
-      document.getElementById('rain-status').innerText = rainActive ? "ON" : "OFF";
-      document.getElementById('rain-status').style.color = rainActive ? "#fff" : "#666";
+    function addBubble(text, isSelf) {
+      const div = document.createElement('div');
+      div.className = `msg-bubble ${isSelf ? 'msg-self' : 'msg-partner'}`;
+      div.innerText = text;
+      messagesBox.appendChild(div);
+      scrollToBottom();
     }
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playMouseClickSound() {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03);
-      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.03);
+    function startSearch() {
+      socket.emit('sit');
+      startBtn.disabled = true;
+      startBtn.innerText = '⏳ กำลังค้นหาคู่คุย...';
+      if (window.innerWidth <= 768) sidebar.classList.remove('open');
     }
 
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('button, select, input, .btn, .bgm-bar, .rain-toggle, .mood-btn')) {
-        playMouseClickSound();
-      }
-    });
-
-    const viewLanding = document.getElementById('view-landing');
-    const viewMatching = document.getElementById('view-matching');
-    const viewChat = document.getElementById('view-chat');
-    
-    const landingOnlineCount = document.getElementById('landing-online-count');
-    const chatMessages = document.getElementById('chat-messages');
-    const chatInput = document.getElementById('chat-input');
-    const partnerName = document.getElementById('partner-name');
-    const partnerEmoji = document.getElementById('partner-emoji');
-    const partnerStatusDisplay = document.getElementById('partner-status-display');
-    const partnerMusicDisplay = document.getElementById('partner-music-display');
-    const myAnimalDisplay = document.getElementById('my-animal-display');
-    const myMusicInput = document.getElementById('my-music');
-    const typingIndicator = document.getElementById('typing-indicator');
-    
-    const timerText = document.getElementById('timer-text');
-    const cigaretteBody = document.getElementById('cigarette-body');
-    const datetimeText = document.getElementById('datetime-text');
-    const expiredModal = document.getElementById('expired-modal');
-    
-    const warningModal = document.getElementById('warning-modal');
-    const warningTitle = document.getElementById('warning-title');
-    const warningDesc = document.getElementById('warning-desc');
-
-    const bgm = document.getElementById('bgm');
-    const waveIcon = document.getElementById('wave-icon');
-    const matchingSubtext = document.getElementById('matching-subtext');
-
-    let typingTimeout = null;
-    let matchingInterval = null;
-
-    const matchingPhrases = [
-      "TUNING FREQUENCY...",
-      "SCANNING LATE NIGHT SIGNALS...",
-      "WAITING UNDER THE NEON LIGHTS...",
-      "ALMOST THERE..."
-    ];
-
-    document.body.addEventListener('click', () => {
-      if (bgm.paused) {
-        bgm.play().then(() => { waveIcon.classList.add('playing'); }).catch(() => {});
-      }
-    }, { once: true });
-
-    function toggleBGM() {
-      if (bgm.paused) {
-        bgm.play(); waveIcon.classList.add('playing');
-      } else {
-        bgm.pause(); waveIcon.classList.remove('playing');
-      }
-    }
-
-    function showView(view) {
-      viewLanding.classList.remove('active');
-      viewMatching.classList.remove('active');
-      viewChat.classList.remove('active');
-
-      if (view === 'landing') viewLanding.classList.add('active');
-      if (view === 'matching') {
-        viewMatching.classList.add('active');
-        startMatchingAnimation();
-      } else {
-        stopMatchingAnimation();
-      }
-      if (view === 'chat') {
-        viewChat.classList.add('active');
-        if (!bgm.paused) {
-          bgm.pause(); waveIcon.classList.remove('playing');
-        }
-      }
-    }
-
-    function startMatchingAnimation() {
-      let idx = 0;
-      matchingSubtext.innerText = matchingPhrases[0];
-      matchingInterval = setInterval(() => {
-        idx = (idx + 1) % matchingPhrases.length;
-        matchingSubtext.innerText = matchingPhrases[idx];
-      }, 2500);
-    }
-
-    function stopMatchingAnimation() {
-      if (matchingInterval) clearInterval(matchingInterval);
-    }
-
-    function updateClock() {
-      const now = new Date();
-      const options = { weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-      datetimeText.innerText = now.toLocaleString('en-US', options).toUpperCase();
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    function showWarningPopup(title, text) {
-      warningTitle.innerText = title;
-      warningDesc.innerText = text;
-      warningModal.classList.add('active');
-    }
-
-    function closeWarningPopup() {
-      warningModal.classList.remove('active');
-    }
-
-    socket.on('hello', (data) => {
-      myNickName = data.nick;
-      myEmoji = data.emoji;
-      myAnimalDisplay.innerText = `${data.emoji} ${data.nick}`;
-    });
-
-    socket.on('online', (count) => { landingOnlineCount.innerText = count; });
-    socket.on('waiting', () => { showView('matching'); });
-
-    socket.on('seated', (data) => {
-      partnerName.innerText = data.partner;
-      partnerEmoji.innerText = data.emoji;
-      partnerStatusDisplay.innerText = data.status || '🌧️ เหงา';
-      
-      const parsedMusic = parseMusicUrl(data.music);
-      partnerMusicDisplay.innerHTML = parsedMusic ? parsedMusic : '🎵 Vibe: None';
-
-      chatMessages.innerHTML = `<div class="message-bubble system">CONNECTED WITH ${data.emoji} ${data.partner}</div>`;
-      expiredModal.classList.remove('active');
-      warningModal.classList.remove('active');
-      showView('chat');
-      updateProfileInfo();
-    });
-
-    socket.on('timer-tick', (data) => {
-      const totalSecs = Math.floor(data.ms / 1000);
-      const mins = Math.floor(totalSecs / 60);
-      const secs = totalSecs % 60;
-      
-      timerText.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-      if (data.speedUp) {
-        timerText.classList.add('speed-warning');
-      } else {
-        timerText.classList.remove('speed-warning');
-      }
-
-      const percentage = (data.ms / (10 * 60 * 1000)) * 80;
-      cigaretteBody.style.width = `${Math.max(0, percentage)}%`;
-    });
-
-    socket.on('time-expired', () => { expiredModal.classList.add('active'); });
-    socket.on('time-extended', () => {
-      expiredModal.classList.remove('active');
-      appendMessage('system', 'EXTENDED 10 MORE MINUTES');
-    });
-
-    socket.on('partner-profile-changed', (profile) => {
-      partnerStatusDisplay.innerText = profile.status || '🌧️ เหงา';
-      const parsedMusic = parseMusicUrl(profile.music);
-      partnerMusicDisplay.innerHTML = parsedMusic ? parsedMusic : '🎵 Vibe: None';
-    });
-
-    socket.on('msg', (data) => { appendMessage('partner', data.text); });
-    socket.on('typing', (on) => { typingIndicator.innerText = on ? `${partnerName.innerText} is typing...` : ''; });
-
-    socket.on('cooldown', (data) => {
-      const secs = Math.ceil(data.ms / 1000);
-      showWarningPopup('⚠️ RESTRICTED', `คุณถูกพักการใช้งานเป็นเวลา ${secs} วินาที เนื่องจากละเมิดกฎกฎระเบียบการใช้ข้อความ`);
-    });
-
-    socket.on('ended', (data) => {
-      expiredModal.classList.remove('active');
-      if (data.reason === 'time-up-new-match' || data.reason === 'partner-left') {
-        appendMessage('system', 'CHAT ENDED. FINDING NEW MATCH...');
-      }
-      if (data.self) showView('landing');
-    });
-
-    function requestMatch() { socket.emit('sit'); }
-    function cancelMatch() { socket.emit('leave'); showView('landing'); }
-
-    function updateProfileInfo() {
-      const status = currentMood;
-      const music = myMusicInput.value.trim();
-      socket.emit('update-profile', { status, music });
-    }
-
-    function sendChatMessage() {
-      const text = chatInput.value.trim();
-      if (text) {
-        socket.emit('msg', text, (res) => {
-          if (res && res.err) {
-            if (res.err === 'filtered') {
-              showWarningPopup('⚠️ คำต้องห้าม!', `พบการใช้คำไม่สุภาพ/คำต้องห้าม! (คำเตือนที่ ${res.strikes}/${res.max})`);
-            } else if (res.err === 'rate') {
-              showWarningPopup('⚠️ ส่งข้อความเร็วเกินไป', 'กรุณารอแปปนึงก่อนส่งข้อความถัดไปครับ');
-            }
-            return;
-          }
-          appendMessage('me', text);
-          chatInput.value = '';
-          socket.emit('typing', false);
-        });
-      }
+    function leaveChat() {
+      socket.emit('leave');
+      resetUI();
     }
 
     function reportPartner() {
-      const reason = prompt("กรุณาระบุสาเหตุที่ต้องการรายงาน (เช่น พิมพ์คำหยาบ / ก่อกวน / อนาจาร):", "พิมพ์คำไม่สุภาพ/คุกคาม");
-      if (reason !== null && reason.trim() !== '') {
-        socket.emit('report', { reason: reason.trim() });
-        showWarningPopup('🚨 REPORT SENT', 'ส่งรายงานเรียบร้อยแล้ว ระบบกำลังเปลี่ยนคู่สนทนาใหม่ให้ครับ');
+      if (confirm('คุณต้องการรายงานผู้ใช้นี้ใช่หรือไม่?')) {
+        socket.emit('report', { reason: 'พฤติกรรมไม่เหมาะสม' });
+        addSystemMsg('🚨 คุณได้ส่งรายงานพฤติกรรมเรียบร้อยแล้ว');
+        leaveChat();
       }
     }
 
-    function handleKeyPress(e) { if (e.key === 'Enter') sendChatMessage(); }
-    function handleTyping() {
-      socket.emit('typing', true);
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => { socket.emit('typing', false); }, 1500);
+    function sendMessage() {
+      const text = msgInput.value.trim();
+      if (!text || !isSeated) return;
+
+      addBubble(text, true);
+      msgInput.value = '';
+      socket.emit('msg', text);
     }
 
-    function voteExtend(agree) {
-      socket.emit('vote-extend', agree);
-      if (agree) {
-        expiredModal.classList.remove('active');
-        appendMessage('system', 'WAITING FOR PARTNER RESPONSE...');
-      }
+    function handleKeyPress(e) {
+      if (e.key === 'Enter') sendMessage();
     }
 
-    function nextPartner() { socket.emit('leave'); showView('matching'); }
-    function exitChat() { socket.emit('leave'); showView('landing'); }
-
-    function appendMessage(sender, text) {
-      const msgDiv = document.createElement('div');
-      msgDiv.classList.add('message-bubble', sender);
-      msgDiv.innerText = text;
-      chatMessages.appendChild(msgDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+    function resetUI() {
+      isSeated = false;
+      msgInput.disabled = true;
+      sendBtn.disabled = true;
+      startBtn.style.display = 'block';
+      startBtn.disabled = false;
+      startBtn.innerText = '🔍 เริ่มสุ่มคุย';
+      reportBtn.style.display = 'none';
+      exitBtn.style.display = 'none';
+      partnerInfo.innerText = 'ไม่ได้เชื่อมต่อ';
     }
+
+    // Socket Events
+    socket.on('online', (count) => {
+      document.getElementById('online-count').innerText = `🟢 ออนไลน์: ${count} คน`;
+    });
+
+    socket.on('waiting', () => {
+      addSystemMsg('⏳ กำลังค้นหาคู่สนทนาที่เหมาะสม...');
+    });
+
+    socket.on('seated', (data) => {
+      isSeated = true;
+      messagesBox.innerHTML = '';
+      addSystemMsg(`🎉 เชื่อมต่อกับคู่สนทนาเรียบร้อย (${data.emoji} ${data.partner})`);
+
+      partnerInfo.innerText = `${data.emoji} ${data.partner} (${data.status})`;
+      msgInput.disabled = false;
+      sendBtn.disabled = false;
+      msgInput.focus();
+
+      startBtn.style.display = 'none';
+      reportBtn.style.display = 'block';
+      exitBtn.style.display = 'block';
+    });
+
+    socket.on('msg', (data) => {
+      addBubble(data.text, false);
+    });
+
+    socket.on('ended', (data) => {
+      addSystemMsg('❌ การสนทนาสิ้นสุดลงแล้ว');
+      resetUI();
+    });
+
+    socket.on('cooldown', (data) => {
+      const mins = Math.ceil(data.ms / 60000);
+      alert(`⚠️ คุณถูกระงับการใช้งานชั่วคราวเป็นเวลา ${mins} นาที`);
+      resetUI();
+    });
+
+    // อัปเดตสถานะส่วนตัว
+    document.getElementById('status-input').addEventListener('change', (e) => {
+      socket.emit('update-profile', { status: e.target.value });
+    });
   </script>
 </body>
 </html>
