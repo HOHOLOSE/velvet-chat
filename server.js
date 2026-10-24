@@ -1,4 +1,4 @@
-// server.js - Velvet Chat Server (AM Edition)
+// server.js - Velvet Chat Server (AM Edition + Telegram Integration)
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -6,9 +6,12 @@ const { Server } = require('socket.io');
 const { check } = require('./filter');
 
 // ⚙️ CONFIGURATION
-const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1563441463130329168/5JRRlK2Pkd1gCbw1oAQrPjTKck4efMhxyI3J2VTpdmPW3q18NmVo3hNCdUqxpbJE_0n9';
-const ADMIN_SECRET = 'velvet_secret_123';
-const MY_WEBSITE_URL = 'https://velvet-chat-x04m.onrender.com';
+const ADMIN_SECRET = 'velvet_secret_123'; // รหัสลับสำหรับกดลิงก์แบน
+const MY_WEBSITE_URL = 'https://velvet-chat-x04m.onrender.com'; // URL เว็บจริงบน Render
+
+// 🤖 Telegram Bot Configuration (ใส่ค่าของคุณเรียบร้อย)
+const TELEGRAM_BOT_TOKEN = '8407838600:AAGq10V2f3-Jnr_s7HkKZfltZ6AbnmY6rI';
+const TELEGRAM_CHAT_ID = '-5150630753';
 
 const PORT = process.env.PORT || 3000;
 const TABLE_MS = 10 * 60 * 1000;      // 10 นาที
@@ -163,56 +166,45 @@ function closeTable(t, reason, actorId) {
   }
 }
 
-// 🛡️ ตัวแปรควบคุมการหน่วงเวลาป้องกัน Status 429
-let lastWebhookSendTime = 0;
-
-function sendDiscordReport(reportData) {
-  if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.trim() === '') return;
-
-  // หน่วงเวลา 5 วินาทีก่อนส่งแต่ละรอบ ป้องกัน Rate Limit (429)
-  const now = Date.now();
-  if (now - lastWebhookSendTime < 5000) {
-    console.log('⏳ [Discord Webhook] หน่วงเวลาป้องกัน Rate Limit (429)');
+// 📩 ฟังก์ชันส่งรายงานเข้า Telegram Bot
+function sendTelegramReport(reportData) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    console.log('⚠️ [Warning] ยังไม่ได้กำหนดค่า Telegram Token หรือ Chat ID');
     return;
   }
-  lastWebhookSendTime = now;
 
   const targetIp = reportData.target.ip || 'Unknown';
   const banLink1Hr = `${MY_WEBSITE_URL}/admin/ban?ip=${targetIp}&key=${ADMIN_SECRET}&duration=60`;
   const banLink24Hr = `${MY_WEBSITE_URL}/admin/ban?ip=${targetIp}&key=${ADMIN_SECRET}&duration=1440`;
 
   const logsText = (reportData.logs && reportData.logs.length > 0)
-    ? reportData.logs.map(m => `**[${m.sender}]**: ${m.text}`).join('\n')
+    ? reportData.logs.map(m => `• ${m.sender}: ${m.text}`).join('\n')
     : '_ไม่มีข้อความสนทนา_';
 
-  const payload = {
-    username: "VELVET CHAT - SECURITY BOT",
-    embeds: [
-      {
-        title: "🚨 มีรายงานพฤติกรรมไม่เหมาะสม (NEW REPORT)",
-        color: 0xff4444,
-        fields: [
-          { name: "👤 ผู้กดรายงาน", value: `${reportData.reporter.emoji} ${reportData.reporter.nick}`, inline: true },
-          { name: "🚫 ผู้ถูกรายงาน", value: `${reportData.target.emoji} ${reportData.target.nick}\n\`IP: ${targetIp}\``, inline: true },
-          { name: "📌 สาเหตุ", value: `**${reportData.reason}**`, inline: false },
-          { name: "💬 ประวัติการคุยย้อนหลัง (Chat Logs)", value: logsText.slice(0, 1000), inline: false },
-          { name: "⚡ ปุ่มจัดการแอดมิน (Quick Ban)", value: `👉 [🚫 แบน IP นี้ 1 ชั่วโมง](${banLink1Hr})\n👉 [🔨 แบน IP นี้ 24 ชั่วโมง](${banLink24Hr})`, inline: false }
-        ],
-        footer: { text: `Velvet Chat System • ${new Date().toLocaleString('th-TH')}` }
-      }
-    ]
-  };
+  const message = `🚨 *มีรายงานพฤติกรรมไม่เหมาะสม (NEW REPORT)*\n\n` +
+                  `👤 *ผู้กดรายงาน:* ${reportData.reporter.emoji} ${reportData.reporter.nick}\n` +
+                  `🚫 *ผู้ถูกรายงาน:* ${reportData.target.emoji} ${reportData.target.nick}\n` +
+                  `🌐 \`IP: ${targetIp}\`\n` +
+                  `📌 *สาเหตุ:* *${reportData.reason}*\n\n` +
+                  `💬 *ประวัติการคุยย้อนหลัง:*\n${logsText}\n\n` +
+                  `⚡ *ลิงก์ด่วนสำหรับแอดมิน:*\n` +
+                  `👉 [🚫 แบน IP นี้ 1 ชั่วโมง](${banLink1Hr})\n` +
+                  `👉 [🔨 แบน IP นี้ 24 ชั่วโมง](${banLink24Hr})`;
 
-  fetch(DISCORD_WEBHOOK_URL, {
+  fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      chat_id: TELEGRAM_CHAT_ID,
+      text: message,
+      parse_mode: 'Markdown'
+    })
   })
   .then(res => {
-    if (res.ok) console.log('✅ [Discord Webhook] ส่งรายงานสำเร็จ');
-    else console.error('❌ [Discord Webhook Error] Status:', res.status);
+    if (res.ok) console.log('✅ [Telegram] ส่งรายงานสำเร็จ');
+    else console.error('❌ [Telegram Error] Status:', res.status);
   })
-  .catch(err => console.error('❌ [Discord Webhook Fetch Error]:', err));
+  .catch(err => console.error('❌ [Telegram Fetch Error]:', err));
 }
 
 app.get('/admin/ban', (req, res) => {
@@ -322,13 +314,14 @@ io.on('connection', (socket) => {
     otherOf(u)?.socket.emit('typing', !!on);
   });
 
+  // 🚨 รับสัญญาณ Report แล้วยิงเข้า Telegram
   socket.on('report', (data) => {
     if (u.state === 'seated' && tables.has(u.tableId)) {
       const t = tables.get(u.tableId);
       const targetUser = users.get(t.a === u.id ? t.b : t.a);
 
       if (targetUser) {
-        sendDiscordReport({
+        sendTelegramReport({
           reporter: { nick: u.nick, emoji: u.emoji, ip: u.ip },
           target: { nick: targetUser.nick, emoji: targetUser.emoji, ip: targetUser.ip },
           reason: (data && data.reason) ? data.reason : 'พฤติกรรมไม่เหมาะสม/พิมพ์คำไม่สุภาพ',
