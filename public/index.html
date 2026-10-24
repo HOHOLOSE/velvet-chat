@@ -152,8 +152,8 @@
     .chat-layout {
       display: flex;
       width: 100%;
-      height: 78vh;
-      height: 78dvh;
+      height: 82vh;
+      height: 82dvh;
       background: rgba(17, 17, 17, 0.92);
       backdrop-filter: blur(8px);
       border: 1px solid #222222;
@@ -163,7 +163,7 @@
     }
 
     .sidebar {
-      width: 35%;
+      width: 36%;
       background: rgba(13, 13, 13, 0.95);
       border-right: 1px solid #222222;
       padding: 16px;
@@ -236,7 +236,7 @@
       margin-bottom: 4px;
       text-transform: uppercase;
     }
-    .status-select, .now-playing-input {
+    .status-input, .now-playing-input {
       width: 100%;
       background: #141414;
       color: #cccccc;
@@ -249,7 +249,7 @@
       margin-bottom: 6px;
       transition: border-color 0.2s;
     }
-    .status-select:hover, .now-playing-input:focus { border-color: #555555; }
+    .status-input:focus, .now-playing-input:focus { border-color: #555555; color: #ffffff; }
 
     .sidebar-footer { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
     .datetime-display {
@@ -288,7 +288,7 @@
     .cigarette-body { height: 100%; background: #e0e0e0; transition: width 0.3s ease; }
     .cigarette-ash { width: 8px; height: 100%; background: #ff4500; box-shadow: 0 0 6px #ff4500; }
 
-    .chat-area { width: 65%; display: flex; flex-direction: column; background: rgba(17, 17, 17, 0.95); }
+    .chat-area { width: 64%; display: flex; flex-direction: column; background: rgba(17, 17, 17, 0.95); }
     .messages-container {
       flex: 1;
       padding: 15px;
@@ -504,23 +504,21 @@
           
           <div class="status-section">
             <div class="status-label">MY STATUS</div>
-            <select class="status-select" id="my-status" onchange="updateProfileInfo()">
-              <option value="🟢 Available">🟢 Available</option>
-              <option value="🎧 Vibing">🎧 Vibing</option>
-              <option value="🌙 Do Not Disturb">🌙 Do Not Disturb</option>
-            </select>
+            <!-- เปลี่ยนเป็นช่อง input พิมพ์ข้อความสถานะได้อิสระ -->
+            <input type="text" class="status-input" id="my-status" placeholder="🟢 Available" value="🟢 Available" oninput="updateProfileInfo()" maxlength="30">
 
             <div class="status-label" style="margin-top: 4px;">NOW PLAYING (URL)</div>
             <input type="url" class="now-playing-input" id="my-music" placeholder="https://youtube.com/..." oninput="updateProfileInfo()">
           </div>
+        </div>
 
+        <div class="sidebar-footer">
+          <!-- ย้าย MY IDENTITY มาไว้เหนือกำหนด CIGARETTE TIMER ตรงนี้ -->
           <div class="my-animal-box">
             <span>MY IDENTITY:</span>
             <span class="my-animal-name" id="my-animal-display">...</span>
           </div>
-        </div>
 
-        <div class="sidebar-footer">
           <div class="cigarette-timer-container">
             <div class="cigarette-label">
               <span>CIGARETTE TIMER</span>
@@ -695,7 +693,7 @@
     const partnerStatusDisplay = document.getElementById('partner-status-display');
     const partnerMusicDisplay = document.getElementById('partner-music-display');
     const myAnimalDisplay = document.getElementById('my-animal-display');
-    const myStatusSelect = document.getElementById('my-status');
+    const myStatusInput = document.getElementById('my-status');
     const myMusicInput = document.getElementById('my-music');
     const typingIndicator = document.getElementById('typing-indicator');
     
@@ -837,7 +835,7 @@
     function cancelMatch() { socket.emit('leave'); showView('landing'); }
 
     function updateProfileInfo() {
-      const status = myStatusSelect.value;
+      const status = myStatusInput.value.trim() || '🟢 Available';
       const music = myMusicInput.value.trim();
       socket.emit('update-profile', { status, music });
     }
