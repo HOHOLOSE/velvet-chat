@@ -268,6 +268,8 @@
     .now-playing-input:focus { border-color: #555555; color: #ffffff; }
 
     .sidebar-footer { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .sidebar-danger-btns { display: flex; gap: 6px; }
+    
     .datetime-display {
       font-size: 0.68rem;
       letter-spacing: 1.5px;
@@ -364,9 +366,11 @@
       background: rgba(13, 13, 13, 0.95);
       border-top: 1px solid #222222;
       gap: 8px;
+      align-items: center;
     }
     .chat-input {
       flex: 1;
+      min-width: 0;
       background: #141414;
       border: 1px solid #262626;
       color: #ffffff;
@@ -377,7 +381,7 @@
       transition: border-color 0.2s;
     }
     .chat-input:focus { border-color: #555555; }
-    .chat-actions { display: flex; gap: 6px; }
+    .chat-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
     /* MODAL & WARNING STYLES */
     .modal-overlay {
@@ -521,6 +525,11 @@
             </div>
           </div>
 
+          <div class="sidebar-danger-btns">
+            <button class="btn btn-secondary" style="flex:1; padding:6px; font-size:0.7rem; color:#ffaa00; border-color:#554422;" onclick="reportPartner()">🚨 REPORT</button>
+            <button class="btn btn-secondary" style="flex:1; padding:6px; font-size:0.7rem; color:#ff4444; border-color:#442222;" onclick="exitChat()">EXIT</button>
+          </div>
+
           <div class="datetime-display" id="datetime-text">MON 00:00 AM</div>
         </div>
       </div>
@@ -535,10 +544,8 @@
         <div class="chat-input-bar">
           <input type="text" class="chat-input" id="chat-input" placeholder="Write a message..." oninput="handleTyping()" onkeydown="handleKeyPress(event)">
           <div class="chat-actions">
-            <button class="btn" style="padding: 10px 16px;" onclick="sendChatMessage()">SEND</button>
-            <button class="btn btn-secondary" style="padding: 10px 12px; color:#ffaa00; border-color:#554422;" onclick="reportPartner()">REPORT</button>
-            <button class="btn btn-secondary" style="padding: 10px 12px;" onclick="nextPartner()">NEXT</button>
-            <button class="btn btn-secondary" style="padding: 10px 12px; color:#ff4444; border-color:#442222;" onclick="exitChat()">EXIT</button>
+            <button class="btn" style="padding: 10px 18px;" onclick="sendChatMessage()">SEND</button>
+            <button class="btn btn-secondary" style="padding: 10px 14px;" onclick="nextPartner()">NEXT</button>
           </div>
         </div>
       </div>
@@ -905,7 +912,7 @@
 
     function reportPartner() {
       const reason = prompt("กรุณาระบุสาเหตุที่ต้องการรายงาน (เช่น พิมพ์คำหยาบ / ก่อกวน / อนาจาร):", "พิมพ์คำไม่สุภาพ/คุกคาม");
-      if (reason !== null) {
+      if (reason !== null && reason.trim() !== '') {
         socket.emit('report', { reason: reason.trim() });
         showWarningPopup('🚨 REPORT SENT', 'ส่งรายงานเรียบร้อยแล้ว ระบบกำลังเปลี่ยนคู่สนทนาใหม่ให้ครับ');
       }
