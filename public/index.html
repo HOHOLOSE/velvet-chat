@@ -18,6 +18,7 @@
     body {
       background-color: #080808;
       color: #e0e0e0;
+      /* ป้องกันการเลื่อนหน้าจอทั้งหน้า */
       height: 100vh;
       height: 100dvh;
       display: flex;
@@ -57,6 +58,7 @@
       .app-container {
         height: 85vh;
         border-radius: 16px;
+        overflow: hidden;
       }
     }
 
@@ -69,6 +71,7 @@
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
+      padding-top: max(16px, env(safe-area-inset-top)); /* รองรับรอยบากมือถือ */
     }
 
     .partner-info {
@@ -88,16 +91,16 @@
       border: 1px solid #333;
     }
 
-    /* Messages Area (แก้ไข Scroll จอมือถือที่นี่) */
+    /* Messages Area */
     .messages-container {
-      flex: 1;
+      flex: 1 1 auto;
       padding: 20px;
       overflow-y: auto;
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
       gap: 12px;
-      -webkit-overflow-scrolling: touch;
+      -webkit-overflow-scrolling: touch; /* ให้เลื่อนลื่นขึ้นบน iOS */
     }
 
     .msg-bubble {
@@ -133,7 +136,7 @@
       text-align: center;
     }
 
-    /* Bottom Input Bar (Fixed) */
+    /* Bottom Input Bar */
     .chat-input-area {
       padding: 12px 16px;
       background: #161616;
@@ -142,9 +145,6 @@
       gap: 10px;
       align-items: center;
       flex-shrink: 0;
-      position: sticky;
-      bottom: 0;
-      z-index: 10;
     }
 
     .chat-input-area input {
@@ -180,14 +180,15 @@
     /* Bottom Toolbar / Action Buttons */
     .bottom-bar {
       width: 100%;
-      max-width: 600px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 12px 16px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom)); /* เว้นที่ให้ Home Indicator ของ iOS */
+      background: #111111;
       font-size: 0.75rem;
       color: #666;
-      z-index: 2;
+      flex-shrink: 0;
     }
 
     .btn-action {
@@ -202,26 +203,6 @@
 
     .btn-action:hover { background: #262626; }
     .btn-report-btn { color: #ff6b6b; border-color: #4a2222; }
-
-    /* 📱 CSS ล็อกขอบจอมือถือเฉพาะส่วน */
-    @media (max-width: 768px) {
-      html, body {
-        height: 100dvh !important;
-        overflow: hidden !important;
-      }
-      .app-container {
-        height: 100dvh !important;
-        border-radius: 0 !important;
-        border: none !important;
-      }
-      .messages-container {
-        flex: 1 !important;
-        overflow-y: auto !important;
-      }
-      .chat-input-area {
-        flex-shrink: 0 !important;
-      }
-    }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(4px); }
@@ -250,16 +231,16 @@
       <input type="text" id="msg-input" placeholder="พิมพ์ข้อความ..." disabled onkeypress="handleKeyPress(event)">
       <button id="send-btn" onclick="sendMessage()" disabled>➔</button>
     </div>
-  </div>
 
-  <!-- Bottom Bar & Controls -->
-  <div class="bottom-bar">
-    <div>
-      <button class="btn-action" id="start-btn" onclick="startSearch()">🔍 เริ่มสุ่มคุย</button>
-      <button class="btn-action" id="exit-btn" onclick="leaveChat()" style="display:none;">🚪 ออกจากแชท</button>
-      <button class="btn-action btn-report-btn" id="report-btn" onclick="reportPartner()" style="display:none;">🚨 REPORT</button>
+    <!-- Bottom Bar & Controls (ย้ายเข้ามาใน app-container เพื่อไม่ให้ทะลุจอบนมือถือ) -->
+    <div class="bottom-bar">
+      <div>
+        <button class="btn-action" id="start-btn" onclick="startSearch()">🔍 เริ่มสุ่มคุย</button>
+        <button class="btn-action" id="exit-btn" onclick="leaveChat()" style="display:none;">🚪 ออกจากแชท</button>
+        <button class="btn-action btn-report-btn" id="report-btn" onclick="reportPartner()" style="display:none;">🚨 REPORT</button>
+      </div>
+      <div>🌧️ RAIN: ON</div>
     </div>
-    <div>🌧️ RAIN: ON</div>
   </div>
 
   <script>
@@ -295,19 +276,19 @@
     }
 
     function startSearch() {
-      socket.emit('sit');
+      if(socket) socket.emit('sit');
       startBtn.disabled = true;
       startBtn.innerText = '⏳ กำลังค้นหา...';
     }
 
     function leaveChat() {
-      socket.emit('leave');
+      if(socket) socket.emit('leave');
       resetUI();
     }
 
     function reportPartner() {
       if (confirm('คุณต้องการรายงานผู้ใช้นี้เข้ากลุ่ม Telegram ใช่หรือไม่?')) {
-        socket.emit('report', { reason: 'พฤติกรรมไม่เหมาะสม / พิมพ์คำไม่สุภาพ' });
+        if(socket) socket.emit('report', { reason: 'พฤติกรรมไม่เหมาะสม / พิมพ์คำไม่สุภาพ' });
         addSystemMsg('🚨 ส่งรายงานไปยังแอดมินทาง Telegram เรียบร้อยแล้ว');
         leaveChat();
       }
@@ -319,7 +300,10 @@
 
       addBubble(text, true);
       msgInput.value = '';
-      socket.emit('msg', text);
+      if(socket) socket.emit('msg', text);
+      
+      // คืนโฟกัสให้กล่องข้อความเมื่อส่งเสร็จ (สะดวกบนคอม แต่บนมือถือจะช่วยไม่ให้คีย์บอร์ดหุบ)
+      msgInput.focus();
     }
 
     function handleKeyPress(e) {
@@ -338,44 +322,46 @@
       partnerInfo.innerText = 'CONNECTED WITH 🐾 ...';
     }
 
-    // Socket Events
-    socket.on('online', (count) => {
-      document.getElementById('online-count').innerText = `🟢 ONLINE: ${count}`;
-    });
+    // Socket Events (ตรวจสอบว่ามี socket ป้องกัน Error หากเปิดทดสอบบนเครื่องเปล่า)
+    if(socket) {
+      socket.on('online', (count) => {
+        document.getElementById('online-count').innerText = `🟢 ONLINE: ${count}`;
+      });
 
-    socket.on('waiting', () => {
-      addSystemMsg('⏳ กำลังค้นหาคู่สนทนา...');
-    });
+      socket.on('waiting', () => {
+        addSystemMsg('⏳ กำลังค้นหาคู่สนทนา...');
+      });
 
-    socket.on('seated', (data) => {
-      isSeated = true;
-      messagesBox.innerHTML = '';
-      addSystemMsg(`🎉 เชื่อมต่อสำเร็จ! คุณกำลังคุยกับ ${data.emoji} ${data.partner}`);
+      socket.on('seated', (data) => {
+        isSeated = true;
+        messagesBox.innerHTML = '';
+        addSystemMsg(`🎉 เชื่อมต่อสำเร็จ! คุณกำลังคุยกับ ${data.emoji} ${data.partner}`);
 
-      partnerInfo.innerText = `CONNECTED WITH ${data.emoji} ${data.partner}`;
-      msgInput.disabled = false;
-      sendBtn.disabled = false;
-      msgInput.focus();
+        partnerInfo.innerText = `CONNECTED WITH ${data.emoji} ${data.partner}`;
+        msgInput.disabled = false;
+        sendBtn.disabled = false;
+        msgInput.focus();
 
-      startBtn.style.display = 'none';
-      reportBtn.style.display = 'inline-block';
-      exitBtn.style.display = 'inline-block';
-    });
+        startBtn.style.display = 'none';
+        reportBtn.style.display = 'inline-block';
+        exitBtn.style.display = 'inline-block';
+      });
 
-    socket.on('msg', (data) => {
-      addBubble(data.text, false);
-    });
+      socket.on('msg', (data) => {
+        addBubble(data.text, false);
+      });
 
-    socket.on('ended', (data) => {
-      addSystemMsg('❌ การสนทนาสิ้นสุดลงแล้ว');
-      resetUI();
-    });
+      socket.on('ended', (data) => {
+        addSystemMsg('❌ การสนทนาสิ้นสุดลงแล้ว');
+        resetUI();
+      });
 
-    socket.on('cooldown', (data) => {
-      const mins = Math.ceil(data.ms / 60000);
-      alert(`⚠️ คุณถูกระงับการใช้งานชั่วคราว ${mins} นาที`);
-      resetUI();
-    });
+      socket.on('cooldown', (data) => {
+        const mins = Math.ceil(data.ms / 60000);
+        alert(`⚠️ คุณถูกระงับการใช้งานชั่วคราว ${mins} นาที`);
+        resetUI();
+      });
+    }
   </script>
 </body>
 </html>
