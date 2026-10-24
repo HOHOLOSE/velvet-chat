@@ -3,365 +3,296 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Velvet Chat</title>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <title>VELVET CHAT - AM EDITION</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Kanit', sans-serif;
+      cursor: url('https://cur.cursors-4u.net/user/use-1/use153.cur'), default !important;
       -webkit-tap-highlight-color: transparent;
     }
 
+    button, select, input, .btn, .bgm-bar, a, .rain-toggle {
+      cursor: url('https://cur.cursors-4u.net/user/use-1/use154.cur'), pointer !important;
+    }
+
     body {
-      background-color: #080808;
-      color: #e0e0e0;
-      /* ป้องกันการเลื่อนหน้าจอทั้งหน้า */
-      height: 100vh;
-      height: 100dvh;
+      background-color: #0b0b0b;
+      color: #e5e5e5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      height: 100vh;
+      height: 100dvh; /* ล็อกความสูงพอดีจอ ป้องกันบั๊กเลื่อนขึ้นลง */
       overflow: hidden;
       position: relative;
     }
 
-    /* Ambient Background Elements */
-    .rain-overlay {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 1;
-      opacity: 0.15;
-      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.05));
-    }
-
-    /* Main Container */
-    .app-container {
-      width: 100%;
-      max-width: 600px;
+    #rain-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
       height: 100vh;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      background: #111111;
-      border: 1px solid #222;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-      position: relative;
-      z-index: 2;
+      pointer-events: none;
+      z-index: 5;
     }
 
-    @media (min-width: 769px) {
-      .app-container {
-        height: 85vh;
-        border-radius: 16px;
-        overflow: hidden;
-      }
-    }
-
-    /* Top Bar / Header */
-    .chat-header {
-      padding: 16px 20px;
-      background: #161616;
-      border-bottom: 1px solid #222;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-      padding-top: max(16px, env(safe-area-inset-top)); /* รองรับรอยบากมือถือ */
-    }
-
-    .partner-info {
-      font-size: 0.85rem;
-      letter-spacing: 1px;
-      color: #aaa;
-      text-transform: uppercase;
-      font-weight: 500;
-    }
-
-    .status-badge {
-      font-size: 0.75rem;
-      background: #222;
-      padding: 4px 10px;
-      border-radius: 12px;
-      color: #888;
-      border: 1px solid #333;
-    }
-
-    /* Messages Area */
-    .messages-container {
-      flex: 1 1 auto;
-      padding: 20px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      -webkit-overflow-scrolling: touch; /* ให้เลื่อนลื่นขึ้นบน iOS */
-    }
-
-    .msg-bubble {
-      max-width: 80%;
-      padding: 10px 16px;
-      border-radius: 16px;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      word-break: break-word;
-      animation: fadeIn 0.2s ease;
-    }
-
-    .msg-self {
-      align-self: flex-end;
-      background: #ffffff;
-      color: #000000;
-      border-bottom-right-radius: 4px;
-    }
-
-    .msg-partner {
-      align-self: flex-start;
-      background: #222222;
-      color: #ffffff;
-      border-bottom-left-radius: 4px;
-      border: 1px solid #2a2a2a;
-    }
-
-    .system-msg {
-      align-self: center;
-      font-size: 0.8rem;
-      color: #666;
-      margin: 8px 0;
-      text-align: center;
-    }
-
-    /* Bottom Input Bar */
-    .chat-input-area {
-      padding: 12px 16px;
-      background: #161616;
-      border-top: 1px solid #222;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-shrink: 0;
-    }
-
-    .chat-input-area input {
+    /* จัดการพื้นที่แสดงผลหลักให้ยืดหยุ่น */
+    .view-section {
+      display: none;
       flex: 1;
-      background: #0d0d0d;
-      border: 1px solid #2a2a2a;
-      padding: 12px 16px;
-      border-radius: 24px;
-      color: #fff;
-      font-size: 0.95rem;
-      outline: none;
-    }
-
-    .chat-input-area input:focus {
-      border-color: #444;
-    }
-
-    .chat-input-area button {
-      background: #ffffff;
-      color: #000000;
-      border: none;
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
+      width: 100%;
+      height: 100%;
+      max-width: 900px;
+      /* เว้นที่ด้านล่างให้เมนู Bottom Controls */
+      padding: 20px 15px max(60px, calc(20px + env(safe-area-inset-bottom))) 15px; 
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
+      animation: fadeIn 0.4s ease-in-out;
+      z-index: 10;
     }
-
-    /* Bottom Toolbar / Action Buttons */
-    .bottom-bar {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      padding-bottom: max(12px, env(safe-area-inset-bottom)); /* เว้นที่ให้ Home Indicator ของ iOS */
-      background: #111111;
-      font-size: 0.75rem;
-      color: #666;
-      flex-shrink: 0;
-    }
-
-    .btn-action {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      color: #ccc;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      cursor: pointer;
-    }
-
-    .btn-action:hover { background: #262626; }
-    .btn-report-btn { color: #ff6b6b; border-color: #4a2222; }
+    .view-section.active { display: flex; }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
+      from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
-  </style>
-</head>
-<body>
 
-  <div class="rain-overlay"></div>
-
-  <div class="app-container">
-    <!-- Header -->
-    <div class="chat-header">
-      <div class="partner-info" id="partner-info">CONNECTED WITH 🐾 ...</div>
-      <div class="status-badge" id="online-count">🟢 ONLINE</div>
-    </div>
-
-    <!-- Messages Box -->
-    <div class="messages-container" id="messages">
-      <div class="system-msg">ยินดีต้อนรับสู่ Velvet Chat กด "เริ่มสุ่มคุย" เพื่อค้นหาคู่สนทนา</div>
-    </div>
-
-    <!-- Input Bar -->
-    <div class="chat-input-area">
-      <input type="text" id="msg-input" placeholder="พิมพ์ข้อความ..." disabled onkeypress="handleKeyPress(event)">
-      <button id="send-btn" onclick="sendMessage()" disabled>➔</button>
-    </div>
-
-    <!-- Bottom Bar & Controls (ย้ายเข้ามาใน app-container เพื่อไม่ให้ทะลุจอบนมือถือ) -->
-    <div class="bottom-bar">
-      <div>
-        <button class="btn-action" id="start-btn" onclick="startSearch()">🔍 เริ่มสุ่มคุย</button>
-        <button class="btn-action" id="exit-btn" onclick="leaveChat()" style="display:none;">🚪 ออกจากแชท</button>
-        <button class="btn-action btn-report-btn" id="report-btn" onclick="reportPartner()" style="display:none;">🚨 REPORT</button>
-      </div>
-      <div>🌧️ RAIN: ON</div>
-    </div>
-  </div>
-
-  <script>
-    const socket = io();
-    let isSeated = false;
-
-    const messagesBox = document.getElementById('messages');
-    const msgInput = document.getElementById('msg-input');
-    const sendBtn = document.getElementById('send-btn');
-    const partnerInfo = document.getElementById('partner-info');
-    const startBtn = document.getElementById('start-btn');
-    const reportBtn = document.getElementById('report-btn');
-    const exitBtn = document.getElementById('exit-btn');
-
-    function scrollToBottom() {
-      messagesBox.scrollTop = messagesBox.scrollHeight;
+    .header-container { text-align: center; margin-bottom: 20px; }
+    .am-title {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 8px;
+      color: #ffffff;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+      animation: neonFlicker 3s infinite alternate;
     }
 
-    function addSystemMsg(text) {
-      const div = document.createElement('div');
-      div.className = 'system-msg';
-      div.innerText = text;
-      messagesBox.appendChild(div);
-      scrollToBottom();
-    }
-
-    function addBubble(text, isSelf) {
-      const div = document.createElement('div');
-      div.className = `msg-bubble ${isSelf ? 'msg-self' : 'msg-partner'}`;
-      div.innerText = text;
-      messagesBox.appendChild(div);
-      scrollToBottom();
-    }
-
-    function startSearch() {
-      if(socket) socket.emit('sit');
-      startBtn.disabled = true;
-      startBtn.innerText = '⏳ กำลังค้นหา...';
-    }
-
-    function leaveChat() {
-      if(socket) socket.emit('leave');
-      resetUI();
-    }
-
-    function reportPartner() {
-      if (confirm('คุณต้องการรายงานผู้ใช้นี้เข้ากลุ่ม Telegram ใช่หรือไม่?')) {
-        if(socket) socket.emit('report', { reason: 'พฤติกรรมไม่เหมาะสม / พิมพ์คำไม่สุภาพ' });
-        addSystemMsg('🚨 ส่งรายงานไปยังแอดมินทาง Telegram เรียบร้อยแล้ว');
-        leaveChat();
+    @keyframes neonFlicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 0 20px rgba(255, 255, 255, 0.2);
       }
+      20%, 24%, 55% { text-shadow: none; }
     }
 
-    function sendMessage() {
-      const text = msgInput.value.trim();
-      if (!text || !isSeated) return;
-
-      addBubble(text, true);
-      msgInput.value = '';
-      if(socket) socket.emit('msg', text);
-      
-      // คืนโฟกัสให้กล่องข้อความเมื่อส่งเสร็จ (สะดวกบนคอม แต่บนมือถือจะช่วยไม่ให้คีย์บอร์ดหุบ)
-      msgInput.focus();
+    .am-wave-svg { width: 320px; max-width: 90vw; height: 50px; margin: 10px 0; }
+    .online-badge {
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      color: #888888;
+      text-transform: uppercase;
     }
 
-    function handleKeyPress(e) {
-      if (e.key === 'Enter') sendMessage();
+    .btn {
+      background: #ffffff;
+      color: #0b0b0b;
+      border: 1px solid #ffffff;
+      padding: 14px 32px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn:hover {
+      background: #0b0b0b;
+      color: #ffffff;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+    }
+    .btn:active { transform: scale(0.95) translateY(0); }
+
+    .btn-secondary {
+      background: transparent;
+      color: #888888;
+      border: 1px solid #333333;
+    }
+    .btn-secondary:hover {
+      background: #1e1e1e;
+      color: #ffffff;
+      border-color: #666666;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
     }
 
-    function resetUI() {
-      isSeated = false;
-      msgInput.disabled = true;
-      sendBtn.disabled = true;
-      startBtn.style.display = 'inline-block';
-      startBtn.disabled = false;
-      startBtn.innerText = '🔍 เริ่มสุ่มคุย';
-      reportBtn.style.display = 'none';
-      exitBtn.style.display = 'none';
-      partnerInfo.innerText = 'CONNECTED WITH 🐾 ...';
+    #view-landing { gap: 30px; }
+    #view-matching { text-align: center; gap: 20px; }
+    
+    .matching-status {
+      font-size: 1.1rem;
+      letter-spacing: 4px;
+      color: #ffffff;
+      text-transform: uppercase;
+      margin-top: 10px;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+      animation: pulse 1.2s infinite alternate;
+    }
+    
+    .matching-subtext {
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      color: #666666;
+      text-transform: uppercase;
+      min-height: 20px;
     }
 
-    // Socket Events (ตรวจสอบว่ามี socket ป้องกัน Error หากเปิดทดสอบบนเครื่องเปล่า)
-    if(socket) {
-      socket.on('online', (count) => {
-        document.getElementById('online-count').innerText = `🟢 ONLINE: ${count}`;
-      });
-
-      socket.on('waiting', () => {
-        addSystemMsg('⏳ กำลังค้นหาคู่สนทนา...');
-      });
-
-      socket.on('seated', (data) => {
-        isSeated = true;
-        messagesBox.innerHTML = '';
-        addSystemMsg(`🎉 เชื่อมต่อสำเร็จ! คุณกำลังคุยกับ ${data.emoji} ${data.partner}`);
-
-        partnerInfo.innerText = `CONNECTED WITH ${data.emoji} ${data.partner}`;
-        msgInput.disabled = false;
-        sendBtn.disabled = false;
-        msgInput.focus();
-
-        startBtn.style.display = 'none';
-        reportBtn.style.display = 'inline-block';
-        exitBtn.style.display = 'inline-block';
-      });
-
-      socket.on('msg', (data) => {
-        addBubble(data.text, false);
-      });
-
-      socket.on('ended', (data) => {
-        addSystemMsg('❌ การสนทนาสิ้นสุดลงแล้ว');
-        resetUI();
-      });
-
-      socket.on('cooldown', (data) => {
-        const mins = Math.ceil(data.ms / 60000);
-        alert(`⚠️ คุณถูกระงับการใช้งานชั่วคราว ${mins} นาที`);
-        resetUI();
-      });
+    .animated-wave path {
+      stroke-dasharray: 600;
+      stroke-dashoffset: 600;
+      animation: waveDash 1.5s linear infinite;
     }
-  </script>
-</body>
-</html>
+    @keyframes waveDash { to { stroke-dashoffset: 0; } }
+    @keyframes pulse { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+
+    .chat-layout {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      max-height: 80vh; /* รักษาความเป็นหน้าต่างบน PC */
+      background: rgba(17, 17, 17, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid #222222;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9);
+    }
+
+    .sidebar {
+      width: 35%;
+      background: rgba(13, 13, 13, 0.95);
+      border-right: 1px solid #222222;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-y: auto;
+    }
+    .profile-card { display: flex; flex-direction: column; gap: 8px; }
+    .partner-avatar {
+      font-size: 2.8rem;
+      text-align: center;
+      padding: 8px;
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 8px;
+      animation: popIn 0.3s ease-out;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .partner-name {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #ffffff;
+      text-align: center;
+    }
+    
+    .status-badge-partner {
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      color: #888888;
+      text-align: center;
+      background: #141414;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #222222;
+      word-break: break-all;
+    }
+    .status-badge-partner a {
+      color: #1db954;
+      text-decoration: underline;
+    }
+
+    .my-animal-box {
+      background: #141414;
+      border: 1px dashed #333333;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      color: #aaaaaa;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .my-animal-name {
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .status-section { margin-top: 4px; }
+    .status-label {
+      font-size: 0.68rem;
+      letter-spacing: 1.5px;
+      color: #666666;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .status-select, .now-playing-input {
+      width: 100%;
+      background: #141414;
+      color: #cccccc;
+      border: 1px solid #262626;
+      padding: 8px 10px;
+      border-radius: 4px;
+      outline: none;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      transition: border-color 0.2s;
+    }
+    .status-select:hover, .now-playing-input:focus { border-color: #555555; }
+
+    .sidebar-footer { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .datetime-display {
+      font-size: 0.7rem;
+      letter-spacing: 1.5px;
+      color: #666666;
+      text-transform: uppercase;
+      text-align: center;
+    }
+    .cigarette-timer-container {
+      background: #141414;
+      border: 1px solid #222222;
+      padding: 8px 10px;
+      border-radius: 6px;
+    }
+    .cigarette-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      letter-spacing: 1.5px;
+      color: #888888;
+      margin-bottom: 6px;
+    }
+    
+    .speed-warning { color: #ff4444; font-weight: bold; animation: pulse 0.8s infinite alternate; }
+
+    .cigarette-bar {
+      height: 8px;
+      background: #222222;
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+    }
+    .cigarette-filter { width: 20%; height: 100%; background: #c28846; }
+    .cigarette-body { height: 100%; background: #e0e0e0; transition: width 0.3s ease; }
+    .cigarette-ash { width: 8px; height: 100%; background: #ff4500; box-shadow: 0 0 6px #ff4500; }
+
+    .chat-area { width: 65%; display: flex; flex-direction: column; background: rgba(17, 17, 17, 0.95); }
+    .messages-container {
+      flex: 1;
+      padding: 15px;
