@@ -11,7 +11,7 @@ const MY_WEBSITE_URL = 'https://velvet-chat-x04m.onrender.com'; // URL เว็
 
 // 🤖 Telegram Bot Configuration (ใส่ค่าของคุณเรียบร้อย)
 const TELEGRAM_BOT_TOKEN = '8407838600:AAGq10V2f3-Jnr_s7HkKZfltZ6AbnmY6rI';
-const TELEGRAM_CHAT_ID = '-5150630753';
+const TELEGRAM_CHAT_ID = '8909833083';
 
 const PORT = process.env.PORT || 3000;
 const TABLE_MS = 10 * 60 * 1000;      // 10 นาที
