@@ -8,7 +8,7 @@ const { check } = require('./filter');
 // ⚙️ CONFIGURATION (ปรับแต่งตรงนี้)
 const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1563429603584909332/ycs-aHzueSWta9iR_jjJ96-ypttvbdygIv3--WbfNwxnZ2ou88LSrhSLXI_7j_w-AsfH'; // ใส่ URL Webhook Discord ของคุณ
 const ADMIN_SECRET = 'velvet_secret_123'; // รหัสลับสำหรับกดลิงก์แบน
-const MY_WEBSITE_URL = 'http://localhost:3000'; // เปลี่ยนเป็น Domain จริงเมื่อเอาขึ้น Server (เช่น https://your-app.onrender.com)
+const MY_WEBSITE_URL = 'https://velvet-chat-x04m.onrender.com/'; // เปลี่ยนเป็น Domain จริงเมื่อเอาขึ้น Server (เช่น https://your-app.onrender.com)
 
 const PORT = process.env.PORT || 3000;
 const TABLE_MS = 10 * 60 * 1000;      // 10 นาที
