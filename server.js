@@ -5,17 +5,17 @@ const path = require('path');
 const { Server } = require('socket.io');
 const { check } = require('./filter');
 
-// ⚙️ CONFIGURATION (ใส่ค่าจริงของคุณเรียบร้อยแล้ว)
-const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1563429603584909332/ycs-aHzueSWta9iR_jjJ96-ypttvbdygIv3--WbfNwxnZ2ou88LSrhSLXI_7j_w-AsfH';
-const ADMIN_SECRET = 'velvet_secret_123'; // รหัสลับสำหรับกดลิงก์แบน
-const MY_WEBSITE_URL = 'https://velvet-chat-x04m.onrender.com'; // URL เว็บจริงบน Render
+// ⚙️ CONFIGURATION
+const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1563440789143556106/8yfXJv7YDnYtz-BCWNq3Mfpabkhx3QDjID3YkGodWvzDY8kC34TCELcB3yiASRFFKbmP';
+const ADMIN_SECRET = 'velvet_secret_123';
+const MY_WEBSITE_URL = 'https://velvet-chat-x04m.onrender.com';
 
 const PORT = process.env.PORT || 3000;
 const TABLE_MS = 10 * 60 * 1000;      // 10 นาที
-const IDLE_THRESHOLD_MS = 30 * 1000; // เงียบเกิน 30 วินาที ไหม้เร็วขึ้น 2 เท่า
+const IDLE_THRESHOLD_MS = 30 * 1000; 
 const REMATCH_AFTER_MS = 15 * 1000;  
 const MAX_LEN = 500;
-const MIN_GAP_MS = 400;              // กันส่งข้อความรัว
+const MIN_GAP_MS = 400;              
 const MAX_STRIKES = 3;               
 const STRIKE_WINDOW_MS = 10 * 60 * 1000;
 const COOLDOWN_MS = 2 * 60 * 1000;   
@@ -25,7 +25,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const server = http.createServer(app);
 const io = new Server(server);
 
-const bannedIPs = new Map(); // เก็บ IP ที่ถูกแบน { ip -> banUntilTimestamp }
+const bannedIPs = new Map(); 
 
 const ANIMALS = [
   ['สุนัข', '🐶'], ['แมว', '🐱'], ['หนู', '🐭'], ['กระต่าย', '🐰'],
@@ -163,12 +163,19 @@ function closeTable(t, reason, actorId) {
   }
 }
 
-// 📩 ฟังก์ชันส่งรายงานเข้า Discord Webhook
+// 🛡️ ตัวแปรควบคุมการหน่วงเวลาป้องกัน Status 429
+let lastWebhookSendTime = 0;
+
 function sendDiscordReport(reportData) {
-  if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.trim() === '') {
-    console.log('⚠️ [Warning] ไม่พบ Discord Webhook URL');
+  if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.trim() === '') return;
+
+  // หน่วงเวลา 5 วินาทีก่อนส่งแต่ละรอบ ป้องกัน Rate Limit (429)
+  const now = Date.now();
+  if (now - lastWebhookSendTime < 5000) {
+    console.log('⏳ [Discord Webhook] หน่วงเวลาป้องกัน Rate Limit (429)');
     return;
   }
+  lastWebhookSendTime = now;
 
   const targetIp = reportData.target.ip || 'Unknown';
   const banLink1Hr = `${MY_WEBSITE_URL}/admin/ban?ip=${targetIp}&key=${ADMIN_SECRET}&duration=60`;
@@ -208,7 +215,6 @@ function sendDiscordReport(reportData) {
   .catch(err => console.error('❌ [Discord Webhook Fetch Error]:', err));
 }
 
-// 🌐 Route สำหรับสั่งแบน IP ผ่าน Web Browser (Admin Only)
 app.get('/admin/ban', (req, res) => {
   const { ip, key, duration } = req.query;
 
@@ -219,7 +225,6 @@ app.get('/admin/ban', (req, res) => {
   const banDurationMs = banMins * 60 * 1000;
   bannedIPs.set(ip, Date.now() + banDurationMs);
 
-  // เตะผู้ใช้ IP นี้ออกจากระบบทันที
   for (const [id, u] of users.entries()) {
     if (u.ip === ip) {
       u.socket.emit('cooldown', { ms: banDurationMs });
@@ -233,10 +238,8 @@ app.get('/admin/ban', (req, res) => {
 const broadcastOnline = () => io.emit('online', users.size);
 
 io.on('connection', (socket) => {
-  // ดึง IP จริง (รองรับ Reverse Proxy ของ Render)
   const clientIP = socket.handshake.headers['x-forwarded-for']?.split(',')[0] || socket.handshake.address;
 
-  // ตรวจสอบการแบน IP
   if (bannedIPs.has(clientIP)) {
     const banUntil = bannedIPs.get(clientIP);
     if (Date.now() < banUntil) {
@@ -274,11 +277,7 @@ io.on('connection', (socket) => {
     if (profile && typeof profile === 'object') {
       u.status = typeof profile.status === 'string' ? profile.status.trim().slice(0, 30) : '🌧️ เหงา';
       u.music = typeof profile.music === 'string' ? profile.music.trim().slice(0, 300) : '';
-      
-      otherOf(u)?.socket.emit('partner-profile-changed', {
-        status: u.status,
-        music: u.music
-      });
+      otherOf(u)?.socket.emit('partner-profile-changed', { status: u.status, music: u.music });
     }
   });
 
@@ -307,7 +306,6 @@ io.on('connection', (socket) => {
     if (t) {
       t.lastInteraction = now;
       t.isSpeedUp = false;
-
       if (!t.logs) t.logs = [];
       t.logs.push({ sender: `${u.emoji} ${u.nick}`, text: clean });
       if (t.logs.length > 10) t.logs.shift();
@@ -324,7 +322,6 @@ io.on('connection', (socket) => {
     otherOf(u)?.socket.emit('typing', !!on);
   });
 
-  // 🚨 รับสัญญาณการกด REPORT
   socket.on('report', (data) => {
     if (u.state === 'seated' && tables.has(u.tableId)) {
       const t = tables.get(u.tableId);
