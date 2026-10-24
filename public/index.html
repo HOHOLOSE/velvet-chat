@@ -193,7 +193,6 @@
       margin-bottom: 2px;
     }
     
-    /* แก้ไขไม่ให้ชื่อกับสถานะซ้อนกัน โดยจัดบล็อกแยกชัดเจน */
     .status-badge-partner {
       font-size: 0.72rem;
       letter-spacing: 1px;
@@ -229,7 +228,6 @@
       text-transform: uppercase;
     }
     
-    /* ปุ่มเลือกความรู้สึกแบบกริด */
     .mood-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -514,7 +512,6 @@
     <div class="chat-layout">
       <div class="sidebar">
         <div class="profile-card">
-          <!-- บล็อกข้อมูลคู่สนทนา จัดระเบียบไม่ให้ซ้อนทับกัน -->
           <div class="partner-profile-box">
             <div class="partner-avatar" id="partner-emoji">🐱</div>
             <div class="partner-name" id="partner-name">STRANGER</div>
@@ -538,7 +535,6 @@
         </div>
 
         <div class="sidebar-footer">
-          <!-- MY IDENTITY อยู่เหนือ CIGARETTE TIMER -->
           <div class="my-animal-box">
             <span>MY IDENTITY:</span>
             <span class="my-animal-name" id="my-animal-display">...</span>
@@ -609,43 +605,40 @@
     let myEmoji = "";
     let currentMood = "🌧️ เหงา";
 
-    // แปลง URL เพลง และสร้าง Player ฝัง (ถ้าเป็น YouTube) หรือลิงก์กดฟังทันที
+    // ฟังก์ชันแปลง URL เพลงให้เล่นเฉพาะแถบเสียงขนาดเล็ก (Height 60px)
     function parseMusicUrl(url) {
       if (!url) return null;
       try {
         const u = new URL(url);
-        
-        // ตรวจจับ YouTube เพื่อสร้าง Player หรือลิงก์เปิดตรงๆ
-        if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
-          let videoId = '';
-          if (u.hostname.includes('youtu.be')) {
-            videoId = u.pathname.slice(1);
-          } else {
-            videoId = u.searchParams.get('v');
-          }
-          if (videoId) {
-            return `<div style="margin-top:4px;">
-                      <a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#ff4444; font-weight:bold;">▶ ฟังบน YouTube</a>
-                      <div style="font-size:0.65rem; color:#888; margin-top:2px; word-break:break-all;">${url}</div>
-                    </div>`;
-          }
-        } 
-        
-        // ตรวจจับ Spotify
-        if (u.hostname.includes('spotify.com')) {
-          return `<div style="margin-top:4px;">
-                    <a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#1db954; font-weight:bold;">🟢 ฟังบน Spotify</a>
-                    <div style="font-size:0.65rem; color:#888; margin-top:2px; word-break:break-all;">${url}</div>
+        let videoId = '';
+
+        if (u.hostname.includes('youtube.com')) {
+          videoId = u.searchParams.get('v');
+        } else if (u.hostname.includes('youtu.be')) {
+          videoId = u.pathname.slice(1);
+        }
+
+        if (videoId) {
+          return `<div style="margin-top:4px; text-align:center;">
+                    <div style="font-size:0.65rem; color:#1db954; margin-bottom:2px; font-weight:bold;">🎵 Audio Player</div>
+                    <iframe width="100%" height="60" 
+                      src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1" 
+                      frameborder="0" 
+                      allow="autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      style="border-radius:6px; border:1px solid #333; background:#000;"></iframe>
                   </div>`;
         }
 
-        return `<div style="margin-top:4px;"><a href="${url}" target="_blank" rel="noopener noreferrer">🎵 เปิดลิงก์เพลง</a></div>`;
+        if (u.hostname.includes('spotify.com')) {
+          return `<div style="margin-top:4px;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#1db954; font-weight:bold;">🟢 ฟังบน Spotify</a></div>`;
+        }
+
+        return `<div style="margin-top:4px;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#fff;">🎵 เปิดลิงก์เพลง</a></div>`;
       } catch (e) {
-        return `🎵 ${url}`;
+        return null;
       }
     }
 
-    // ฟังก์ชันเลือกอารมณ์ความรู้สึก
     function selectMood(mood, btnElement) {
       currentMood = mood;
       document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
@@ -653,7 +646,6 @@
       updateProfileInfo();
     }
 
-    // RAIN CANVAS
     const canvas = document.getElementById('rain-canvas');
     const ctx = canvas.getContext('2d');
     let rainActive = true;
@@ -795,7 +787,6 @@
       }
       if (view === 'chat') {
         viewChat.classList.add('active');
-        // เมื่อเข้ามาหน้าแชท ให้หยุดเพลง BGM หลักอัตโนมัติ เพื่อเปิดทางให้ฟังเพลงที่ตัวเองใส่
         if (!bgm.paused) {
           bgm.pause();
           waveIcon.classList.remove('playing');
