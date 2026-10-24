@@ -6,7 +6,7 @@ const { Server } = require('socket.io');
 const { check } = require('./filter');
 
 // ⚙️ CONFIGURATION
-const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1563440789143556106/8yfXJv7YDnYtz-BCWNq3Mfpabkhx3QDjID3YkGodWvzDY8kC34TCELcB3yiASRFFKbmP';
+const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1563441463130329168/5JRRlK2Pkd1gCbw1oAQrPjTKck4efMhxyI3J2VTpdmPW3q18NmVo3hNCdUqxpbJE_0n9';
 const ADMIN_SECRET = 'velvet_secret_123';
 const MY_WEBSITE_URL = 'https://velvet-chat-x04m.onrender.com';
 
